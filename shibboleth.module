@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for Shibboleth module.
+ *
+ * @DCG
+ * This file is no longer required in Drupal 8.
+ * @see https://www.drupal.org/node/2217931
+ */
+
+/**
+ * Implements hook_user_logout().
+ *
+ * @return void
+ */
+function shibboleth_user_logout() {
+  // @todo If config value is true, destroy the Shibboleth session on Drupal logout.
+}

@@ -1,0 +1,10 @@
+name: Shibboleth
+type: module
+description: Shibboleth authentication
+package: Custom
+core: 8.x
+core_version_requirement: ^8 || ^9
+
+configure: entity.shib_path.collection
+#dependencies:
+#  - externalauth:externalauth

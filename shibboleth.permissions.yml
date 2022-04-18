@@ -1,0 +1,9 @@
+administer shibboleth:
+  title: 'Administer Shibboleth'
+  description: 'Edit Shibboleth configuration and manage protected paths.'
+  restrict access: true
+
+bypass shibboleth login:
+  title: 'Bypass Shibboleth login'
+  description: 'Allow a Shibboleth-provisioned user to log in with Drupal authentication with no Shibboleth session required.'
+  restrict access: true

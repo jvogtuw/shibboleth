@@ -1,0 +1,11 @@
+shibboleth_login_handler_url: "/Shibboleth.sso/Login"
+shibboleth_logout_handler_url: "/Shibboleth.sso/Logout"
+server_variable_username: "REMOTE_USER"
+server_variable_email: "HTTP_UWEDUEMAIL"
+server_variable_affiliation: "UNSCOPED_AFFILIATION"
+server_variable_groups: "ISMEMBEROF"
+login_link_text: "Shibboleth login"
+logout_link_text: "Shibboleth logout"
+shibboleth_id_label: "Shibboleth ID"
+auto_register_user: TRUE
+debug_path_prefix: "/user/"

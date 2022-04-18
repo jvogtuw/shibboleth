@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.shibboleth_username
+  module:
+    - user
+    - shibboleth
+id: user.user.shibboleth_username
+field_name: shibboleth_username
+entity_type: user
+bundle: user
+label: 'Shibboleth username'
+description: 'Map the Drupal user to a Shibboleth user by entering the username provided by the Shibboleth session for this user. This value is set automatically when a user is created by clicking on the Shibboleth login link. It can also be set manually by anyone with permission to administer users.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

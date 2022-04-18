@@ -1,0 +1,126 @@
+#shibboleth.example:
+#  path: '/shibboleth/example'
+#  defaults:
+#    _title: 'Example'
+#    _controller: '\Drupal\shibboleth\Controller\ShibbolethController::build'
+#  requirements:
+#    _permission: 'access content'
+
+shibboleth.settings:
+  path: '/admin/config/people/shibboleth'
+  defaults:
+    _title: 'Shibboleth settings'
+    _form: 'Drupal\shibboleth\Form\ShibbolethSettings'
+  requirements:
+    _permission: 'administer shibboleth'
+
+shibboleth.login_landing:
+  path: '/shibboleth'
+  defaults:
+    _controller: '\Drupal\shibboleth\Controller\LoginController::loginLanding'
+  requirements:
+    _permission: 'access content'
+  options:
+    no_cache: 'TRUE'
+
+shibboleth.drupal_login:
+  path: '/shibboleth/login'
+  defaults:
+    _controller: '\Drupal\shibboleth\Controller\LoginController::login'
+    _title: 'Login'
+  requirements:
+    _permission: 'access content'
+#    _custom_access: '\Drupal\shibboleth\Controller\LoginController::loginAccess'
+  options:
+    no_cache: 'TRUE'
+
+#shibboleth.drupal_login_error:
+#  path: '/shibboleth/login/error'
+#  defaults:
+#    _controller: '\Drupal\shibboleth\Controller\LoginController::loginError'
+#    _title: 'Login error'
+#  requirements:
+#    _permission: 'access content'
+#  options:
+#    no_cache: 'TRUE'
+
+shibboleth.shib_auth:
+  path: '/shibboleth/authenticate'
+  defaults:
+    _controller: '\Drupal\shibboleth\Controller\LoginController::shibAuthenticate'
+    _title: 'Shibboleth authentication only'
+  requirements:
+    _permission: 'access content'
+  options:
+    no_cache: 'TRUE'
+
+shibboleth.shib_destroy:
+  path: '/shibboleth/destroy'
+  defaults:
+    _controller: '\Drupal\shibboleth\Controller\LogoutController::shibDestroy'
+    _title: 'Shibboleth session logout'
+  requirements:
+    _role: 'anonymous'
+  options:
+    no_cache: 'TRUE'
+
+shibboleth.drupal_logout:
+  drupal:_logout:
+  path: '/shibboleth/logout'
+  defaults:
+    _controller: '\Drupal\shibboleth\Controller\LogoutController::logout'
+    _title: 'Logout'
+  requirements:
+    _permission: 'access content'
+  options:
+    no_cache: 'TRUE'
+
+entity.shib_path.collection:
+  path: '/admin/config/people/shibboleth/paths'
+  defaults:
+    _entity_list: 'shib_path'
+    _title: 'Protected path configuration'
+  requirements:
+    _permission: 'administer shibboleth'
+
+entity.shib_path.add_form:
+  path: '/admin/config/people/shibboleth/paths/add'
+  defaults:
+    _entity_form: 'shib_path.add'
+    _title: 'Add a protected path'
+  requirements:
+    _permission: 'administer shibboleth'
+
+entity.shib_path.edit_form:
+  path: '/admin/config/people/shibboleth/paths/{shib_path}'
+  defaults:
+    _entity_form: 'shib_path.edit'
+    _title: 'Edit a protected path'
+  requirements:
+    _permission: 'administer shibboleth'
+
+entity.shib_path.delete_form:
+  path: '/admin/config/people/shibboleth/paths/{shib_path}/delete'
+  defaults:
+    _entity_form: 'shib_path.delete'
+    _title: 'Delete a protected path'
+  requirements:
+    _permission: 'administer shibboleth'
+
+#entity.shib_path.enable:
+#  path: '/admin/config/people/shibboleth/paths/{shib_path}/enable'
+#  defaults:
+#    _controller: '\Drupal\shib_path\Controller\ShibPathController::performOperation'
+#    op: enable
+#  requirements:
+#    _entity_access: shib_path.enable
+#    _csrf_token: 'TRUE'
+#
+#entity.shib_path.disable:
+#  path: '/admin/config/people/shibboleth/paths/{shib_path}/disable'
+#  defaults:
+#    _controller: '\Drupal\shib_path\Controller\ShibPathController::performOperation'
+#    op: disable
+#  requirements:
+#    _entity_access: shib_path.disable
+#    _csrf_token: 'TRUE'
