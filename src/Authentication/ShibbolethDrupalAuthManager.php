@@ -24,7 +24,7 @@ class ShibbolethDrupalAuthManager {
   /**
    * @var
    */
-  protected $user;
+  // protected $user;
 
   /**
    * @var \Drupal\user\UserStorageInterface
@@ -71,7 +71,7 @@ class ShibbolethDrupalAuthManager {
   /**
    * MySQL error code for duplicate entry.
    */
-  const MYSQL_ER_DUP_KEY = 23000;
+  // const MYSQL_ER_DUP_KEY = 23000;
 
 
   /**
@@ -135,8 +135,6 @@ class ShibbolethDrupalAuthManager {
       return $account;
     }
     elseif ($this->config->get('auto_register_user')) {
-      // Attempt to create a new user.
-      // $authname = $this->shibAuth->getTargetedId();
       return $this->registerUser();
     }
 
@@ -188,6 +186,8 @@ class ShibbolethDrupalAuthManager {
     // Log in the Drupal user.
     user_login_finalize($linked_user);
     return $linked_user;
+
+
     // $error_message = '';
     // try {
     //   // $this->setErrorMessage('you shall not pass');
@@ -269,7 +269,9 @@ class ShibbolethDrupalAuthManager {
   /**
    * Creates a new Drupal user linked to the current Shibboleth session.
    *
-   * @return bool
+   * The newly created user will be logged in.
+   *
+   * @return \Drupal\user\UserInterface
    *
    * @throws \ShibbolethAutoRegisterException
    */
@@ -284,41 +286,19 @@ class ShibbolethDrupalAuthManager {
 
     try {
       // throw new ShibbolethAutoRegisterException('nope');
-      // Create a new Drupal user entity and save it.
+      // Create a new Drupal user entity.
+      /** @var \Drupal\user\UserInterface $new_user */
       $new_user = $this->userStorage->create($user_data);
+      // Save the new user. Throws an exception on failure, so we can assume
+      // success.
       $this->userStorage->save($new_user);
-      if ($new_user->id()) {
-        user_login_finalize($new_user);
-        $this->currentUser = $new_user;
-        return $new_user;
-      }
+      user_login_finalize($new_user);
+      // $this->currentUser = $new_user;
+      return $new_user;
     }
-    catch (ShibbolethAutoRegisterException $e) {
+    catch (\Exception $e) {
       $this->logger->error('Unable to create a Drupal user for the Shibboleth ID %authname.', ['%authname' => $this->shibAuth->getTargetedId()]);
-      // watchdog_exception($this->entityTypeId, $e);
-      // throw new EntityStorageException($e->getMessage(), $e->getCode(), $e);
     }
-
-    // try {
-    //   // Create Drupal user.
-    //   $this->user = $this->userStorage->create($user_data);
-    //   if (!$results = $this->user->save()) {
-    //     // Throw exception if Drupal user creation fails.
-    //     throw new \Exception();
-    //   }
-    // }
-    // catch (\Exception $e) {
-    //   if ($e->getCode() == self::MYSQL_ER_DUP_KEY) {
-    //     $this->setErrorMessage(t('There was an error creating your user. A user with your email address already exists.'));
-    //     throw new \Exception('Error creating new Drupal user from Shibboleth Session. Duplicate user row.');
-    //   }
-    //   else {
-    //     $this->setErrorMessage(t('There was an error creating your user.'));
-    //     throw new \Exception('Error creating a new Drupal user from the Shibboleth session.');
-    //   }
-    // }
-    //
-    // return TRUE;
   }
 
   /**
@@ -328,14 +308,14 @@ class ShibbolethDrupalAuthManager {
    *
    * @throws \Exception
    */
-  private function authenticateUser() {
-    if (empty($this->user)) {
-      $this->setErrorMessage(t('There was an error logging you in.'));
-      throw new \Exception('No uid found for user when trying to initialize Drupal session.');
-    }
-    user_login_finalize($this->user);
-    return TRUE;
-  }
+  // private function authenticateUser() {
+  //   if (empty($this->user)) {
+  //     $this->setErrorMessage(t('There was an error logging you in.'));
+  //     throw new \Exception('No uid found for user when trying to initialize Drupal session.');
+  //   }
+  //   user_login_finalize($this->user);
+  //   return TRUE;
+  // }
 
   public function logout() {
     user_logout();
@@ -406,17 +386,18 @@ class ShibbolethDrupalAuthManager {
     $rand = new Random();
     return $rand->string(30);
   }
+  
   /**
    *
    */
-  private function setErrorMessage($message) {
-    $this->error_message = $message;
-  }
+  // private function setErrorMessage($message) {
+  //   $this->error_message = $message;
+  // }
 
   /**
    *
    */
-  public function getErrorMessage() {
-    return $this->error_message;
-  }
+  // public function getErrorMessage() {
+  //   return $this->error_message;
+  // }
 }

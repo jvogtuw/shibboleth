@@ -9,3 +9,4 @@ logout_link_text: "Shibboleth logout"
 shibboleth_id_label: "Shibboleth ID"
 auto_register_user: TRUE
 debug_path_prefix: "/user/"
+excluded_routes: { 'user-login' }

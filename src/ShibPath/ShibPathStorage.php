@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Path\PathMatcherInterface;
 use Drupal\Core\Url;
+use Drupal\shibboleth\Entity\ShibPath;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class ShibPathStorage extends ConfigEntityStorage implements ShibPathStorageInterface {
@@ -69,21 +70,21 @@ class ShibPathStorage extends ConfigEntityStorage implements ShibPathStorageInte
   public function getBestMatchesForPath(string $path, $include_disabled = FALSE) {
     // Never check access for these routes
     // @todo Make these always accessible paths a config value.
-    $always_accessible_routes = [
-      'user.logout',
-      'shibboleth.drupal_logout',
-    ];
-    foreach ($always_accessible_routes as $always_accessible_route) {
-      $always_accessible_path = Url::fromRoute($always_accessible_route)->toString();
-      if ($this->pathMatcher->matchPath($path, $always_accessible_path)) {
-        return [];
-      }
-    }
+    // $always_accessible_routes = [
+    //   'user.logout',
+    //   'shibboleth.drupal_logout',
+    // ];
+    // foreach ($always_accessible_routes as $always_accessible_route) {
+    //   $always_accessible_path = Url::fromRoute($always_accessible_route)->toString();
+    //   if ($this->pathMatcher->matchPath($path, $always_accessible_path)) {
+    //     return [];
+    //   }
+    // }
 
     // Get all the ShibPaths to check for matches
     $shib_paths = $include_disabled ? parent::loadMultiple() : parent::loadByProperties(['status' => 1]);
     // Remove the 'all' path rule. We can deal with that elsewhere.
-    unset($shib_paths['all']);
+    // unset($shib_paths['all']);
     // Select only the most granular match(es).
     // @see Drupal\shibboleth\Access\ShibPathAccessChecker for handling multiple
     // best matches.
@@ -108,6 +109,7 @@ class ShibPathStorage extends ConfigEntityStorage implements ShibPathStorageInte
         }
       }
     }
+    // $this->memoryCache->
     return $best_matches;
   }
 

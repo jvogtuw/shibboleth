@@ -210,7 +210,7 @@ class LoginController extends ControllerBase {
     // }
 
     // Will redirect to ?destination by default.
-    return $this->redirect('<front>');
+    // return $this->redirect('<front>');
 
   }
 
@@ -249,7 +249,9 @@ class LoginController extends ControllerBase {
 
   protected function loginError() {
     $page_title = t('Access denied');
-    return ['#markup' => t('You are not allowed to access this page. Shib')];
+    return [
+      '#markup' => t('Login failed.')
+    ];
     // if ($this->shib_session->sessionExists() && $this->shib_drupal_auth->getPotentialUserMatch()) {
     //   return $this->form_builder->getForm(AccountMapRequest::class);
     // }

@@ -5,5 +5,10 @@ administer shibboleth:
 
 bypass shibboleth login:
   title: 'Bypass Shibboleth login'
-  description: 'Allow a Shibboleth-provisioned user to log in with Drupal authentication with no Shibboleth session required.'
+  description: 'Allow a Shibboleth-provisioned user to log in with Drupal core authentication without an active Shibboleth session.'
+  restrict access: true
+
+bypass shibboleth rules:
+  title: 'Bypass Shibboleth path access rules'
+  description: 'Access Shibboleth-protected paths without access check.'
   restrict access: true

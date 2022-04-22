@@ -106,6 +106,9 @@ class ShibPath extends ConfigEntityBase implements ShibPathInterface {
    */
   protected $locked;
 
+
+  private $criteria_list;
+
   /**
    * {@inheritdoc}
    */
@@ -122,5 +125,24 @@ class ShibPath extends ConfigEntityBase implements ShibPathInterface {
     // @todo Check if path is unique
   }
 
+  public function getCriteria($asArray = TRUE) {
+
+    if (!$asArray) {
+      return $this->criteria;
+    }
+
+    if (!isset($this->criteria_list) && !empty($this->criteria)) {
+      $this->setCriteriaList();
+    }
+    return $this->criteria_list;
+  }
+
+  private function setCriteriaList() {
+    $criteria_list = [];
+    if (!empty($this->criteria)) {
+      $criteria_list = explode("\n\r", $this->criteria);
+    }
+    $this->criteria_list = $criteria_list;
+  }
 
 }

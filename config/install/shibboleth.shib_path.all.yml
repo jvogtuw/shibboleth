@@ -1,5 +1,5 @@
 id: all
-label: "All paths"
+label: "Whole site"
 path: "/*"
 status: false
 locked: true
