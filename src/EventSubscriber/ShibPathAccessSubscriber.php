@@ -26,6 +26,7 @@ use Drupal\shibboleth\Access\ShibPathAccess;
 // use Drupal\shibboleth\ShibPath\ShibPathAccessChecker;
 use Drupal\shibboleth\Access\ShibRuleAccessInterface;
 use Drupal\shibboleth\Authentication\ShibbolethAuthManager;
+use Drupal\shibboleth\Exception\ShibbolethSessionException;
 use Symfony\Cmf\Component\Routing\RouteObjectInterface;
 use Symfony\Component\ErrorHandler\ErrorRenderer\HtmlErrorRenderer;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -38,6 +39,8 @@ use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\HttpCache\SubRequestHandler;
 use Symfony\Component\HttpKernel\KernelEvents;
+use TYPO3\PharStreamWrapper\Exception;
+
 // use Symfony\Component\Routing\Route;
 
 /**
@@ -170,10 +173,8 @@ class ShibPathAccessSubscriber implements EventSubscriberInterface {
    * @param \Symfony\Component\HttpKernel\Event\RequestEvent $event
    *   Response event.
    */
-  public function onKernelRequest(RequestEvent $event) {
-    // dpm($event->getRequest(), 'request');
-    // return new TrustedRedirectResponse('<front>');
-    // $this->messenger->addStatus('shib ' . $event->getRequest()->getPathInfo());
+  public function onRequestShibRule(RequestEvent $event) {
+
     // Don't act on SubRequests.
     // if (!$event->isMasterRequest()) {
     //   return;
@@ -181,8 +182,6 @@ class ShibPathAccessSubscriber implements EventSubscriberInterface {
 
     // Do not capture redirects or modify XML HTTP Requests.
     if ($event->getRequest()->isXmlHttpRequest()) {
-      // $this->messenger->addStatus('shib return');
-      // $this->messenger->addStatus('shib ignore ' . $event->getRequest()->getPathInfo());
       return;
     }
     //
@@ -192,90 +191,48 @@ class ShibPathAccessSubscriber implements EventSubscriberInterface {
       $this->messenger->addStatus('This user can bypass Shibboleth access rules');
       return;
     }
-    // return;
-    // $shib_session_exists = $this->shibAuth->sessionExists();
-    //
+
+    $request = $event->getRequest();
+
     // The whole site requires Shibboleth authentication. Enforce a check
     // regardless of the target destination.
     if ($this->shibPathAccess->isWholeSiteProtected()) {
-      if (!$this->shibAuth->sessionExists()) {
-        $this->messenger->addStatus('No Shibboleth session');
-        // redirect to Shibboleth login handler.
+      // return;
+      try {
+        $this->shibPathAccess->checkAccess($request, 'all');
       }
-      elseif (!$this->shibPathAccess->checkAccessWholeSite($this->currentUser)) {
-        // The Shibboleth user doesn't pass the full site access rule.
-        throw new AccessDeniedHttpException('The Shibboleth user cannot access this site.');
+      catch (ShibbolethSessionException $e) {
+        $response = new TrustedRedirectResponse($this->shibAuth->getAuthenticateUrl()->toString());
+        $event->setResponse($response);
+        return;
       }
+      // $this->messenger->addStatus($this->shibAuth->getEmail());
+      // if (!$this->shibAuth->sessionExists()) {
+      //   $this->messenger->addStatus('No Shibboleth session');
+      //   // redirect to Shibboleth login handler.
+      //   $response = new TrustedRedirectResponse($this->shibAuth->getAuthenticateUrl()->toString());
+      //   $event->setResponse($response);
+      // }
+      // else {
+      //   // @see $this->onResponse() for how the results of this check are used.
+      //   $this->shibPathAccess->checkAccessWholeSite($request);
+      // }
     }
-
-    // return;
-    // Clone the request to avoid unintentional changes to it.
-    // $request = clone $event->getRequest();
-    $request = $event->getRequest();
 
     // The request isn't valid for Shibboleth access checks.
     if (!$this->isRequestActionable($request)) {
       return;
     }
-    // $this->messenger->addStatus('ARE WE THERE YET?');
-    // $access_result = $this->shibPathAccess->checkAccess($event->getRequest());
-    $this->shibPathAccess->checkAccess($request);
-    /** @var AccessResult $access_result */
-    $access_result = $request->attributes->get(ShibRuleAccessInterface::ACCESS_RESULT);
-    // dpm($access_result);
 
-    // $this->messenger->addStatus($access_result->);
-    if ($access_result->isForbidden()) {
-      $this->messenger->addStatus('you shall not pass!');
-      if (!$this->shibAuth->sessionExists()) {
-        // $this->messenger->addStatus('No Shibboleth session found');
-        // redirect to Shibboleth login handler.
-        $response = new TrustedRedirectResponse($this->shibAuth->getAuthenticateUrl()->toString());
-        $event->setResponse($response);
-        // return;
-      }
-      // else {
-        // $response = new Response();
-        // $response = new TrustedRedirectResponse($this->shibAuth->getAuthenticateUrl()->toString());
-        // $event->setResponse($response);
-      //   $event->getRequest()->attributes->set(AccessAwareRouterInterface::ACCESS_RESULT, AccessResult::forbidden('bad netid. bad.'));
-
-        // $content = [
-        //   '#title' => 'no way',
-        //   '#markup' => t('Access denied')
-        // ];
-        // $response = new HtmlResponse($content, 403);
-        // $event->setResponse($response);
-        // $access_result =  AccessResult::forbidden('bad netid. bad.')->getReason();
-        // $request = $event->getRequest();
-        // $response = $event->getResponse()->setContent('go away')->setStatusCode(403);
-        // $response = new Response('go away', 403);
-        // $response->setContent($access_result);
-        // $event->setResponse($response);
-        // Merge the custom path's route's access result's cacheability metadata
-        // with the existing one (from the master request), otherwise create it.
-        // if (!$request->attributes->has(AccessAwareRouterInterface::ACCESS_RESULT)) {
-        //   $request->attributes->set(AccessAwareRouterInterface::ACCESS_RESULT, $access_result);
-        // }
-        // else {
-        //   $existing_access_result = $request->attributes->get(AccessAwareRouterInterface::ACCESS_RESULT);
-        //   if ($existing_access_result instanceof RefinableCacheableDependencyInterface) {
-        //     $existing_access_result->addCacheableDependency($access_result);
-        //   }
-        // }
-        // $response = new Response('Access denied', 403);
-        // $response = new Access
-        // $this->messenger->addStatus('no thank you');
-        // return AccessResult::forbidden('noop');
-        // Otherwise, throw access denied. This assumes a valid Shibboleth session,
-        // but other criteria weren't met.
-        // $this->access
-
-        // throw new AccessDeniedHttpException('The Shibboleth user cannot access this resource....');
-
-        // $event->getRequest()->
-      // }
-
+    // Finally, do the actual access check for the path.
+    try {
+      $this->messenger->addStatus('Checking specific access');
+      $this->shibPathAccess->checkAccess($request);
+    }
+    catch (ShibbolethSessionException $e) {
+      $response = new TrustedRedirectResponse($this->shibAuth->getAuthenticateUrl()->toString());
+      $event->setResponse($response);
+      return;
     }
 
   }
@@ -311,7 +268,7 @@ class ShibPathAccessSubscriber implements EventSubscriberInterface {
    * @param \Symfony\Component\HttpKernel\Event\ResponseEvent $event
    *   Response event.
    */
-  public function onKernelResponse(ResponseEvent $event) {
+  public function onResponseShibRule(ResponseEvent $event) {
 
     if (!$event->isMainRequest()) {
       return;
@@ -328,7 +285,7 @@ class ShibPathAccessSubscriber implements EventSubscriberInterface {
     $access_result = $request->attributes->get(ShibRuleAccessInterface::ACCESS_RESULT);
     $response->addCacheableDependency($access_result);
 
-    if (isset($access_result) && !$access_result->isAllowed()) {
+    if (isset($access_result) && $access_result->isForbidden()) {
       if ($access_result instanceof CacheableDependencyInterface && $request->isMethodCacheable()) {
         throw new CacheableAccessDeniedHttpException($access_result, $access_result instanceof AccessResultReasonInterface ? $access_result->getReason() : '');
       }
@@ -345,8 +302,8 @@ class ShibPathAccessSubscriber implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      KernelEvents::REQUEST => ['onKernelRequest'],
-      KernelEvents::RESPONSE => ['onKernelResponse', 15],
+      KernelEvents::REQUEST => ['onRequestShibRule'],
+      KernelEvents::RESPONSE => ['onResponseShibRule', 15],
     ];
   }
 

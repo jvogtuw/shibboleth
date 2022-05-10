@@ -15,8 +15,10 @@ class ShibPathListBuilder extends ConfigEntityListBuilder {
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header['label'] = $this->t('Path');
-    $header['groups'] = $this->t('Groups');
+    $header['label'] = $this->t('Label');
+    $header['path'] = $this->t('Path');
+    // $header['criteria_type'] = $this->t('Criteria type');
+    $header['criteria'] = $this->t('Criteria');
     $header['status'] = $this->t('Status');
     return $header + parent::buildHeader();
   }
@@ -27,7 +29,13 @@ class ShibPathListBuilder extends ConfigEntityListBuilder {
   public function buildRow(EntityInterface $entity) {
     /** @var \Drupal\shibboleth\ShibPath\ShibPathInterface $entity */
     $row['label'] = $entity->label();
-    $row['groups'] = $entity->get('groups');
+    $row['path'] = $entity->get('path');
+    // $row['criteria_type'] = $entity->get('criteria_type');
+    $criteria = '';
+    if(!empty($entity->get('criteria_type'))) {
+      $criteria = $entity->get('criteria_type') . ': ' . $entity->get('criteria');
+    }
+    $row['criteria'] = $criteria;
     $row['status'] = $entity->status() ? $this->t('Enabled') : $this->t('Disabled');
     return $row + parent::buildRow($entity);
   }

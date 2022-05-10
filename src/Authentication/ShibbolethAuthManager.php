@@ -287,10 +287,12 @@ class ShibbolethAuthManager {
 
     $login_handler = $this->getLoginHandlerUrl();
     $login_url = '';
+    // The login handler is an absolute URL.
     if (parse_url($login_handler, PHP_URL_HOST)) {
       $login_url = Url::fromUri($login_handler, $target_options);
     }
     else {
+      // Otherwise, the login handler is local.
       $login_url = Url::fromUserInput($login_handler, $target_options);
     }
     return $login_url;

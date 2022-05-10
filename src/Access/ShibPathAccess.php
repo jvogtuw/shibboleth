@@ -22,6 +22,7 @@ use Drupal\Core\Session\SessionManagerInterface;
 use Drupal\path_alias\AliasManagerInterface;
 use Drupal\shibboleth\Authentication\ShibbolethAuthManager;
 use Drupal\shibboleth\Entity\ShibPath;
+use Drupal\shibboleth\Exception\ShibbolethSessionException;
 use Symfony\Cmf\Component\Routing\RouteObjectInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
@@ -92,54 +93,94 @@ class ShibPathAccess implements ShibRuleAccessInterface {
     // $this->accessManager
   }
 
+  /**
+   * Checks the current Shibboleth user's access based on the given rule.
+   *
+   * @param \Drupal\shibboleth\Entity\ShibPath $rule
+   *
+   * @return \Drupal\Core\Access\AccessResultAllowed|\Drupal\Core\Access\AccessResultForbidden|mixed
+   */
+  public function checkAccessRule(ShibPath $rule) {
+
+    if (!$this->shibAuth->sessionExists()) {
+      throw new ShibbolethSessionException();
+    }
+
+    // Check the Drupal user session in case we've already evaluated the access.
+    if ($session_rule = $this->getSessionRule($rule->id())) {
+      return $session_rule;
+    }
+
+    $access_result = AccessResult::neutral();
+    if ($criteria_type = $rule->get('criteria_type')) {
+      $method = 'get' . ucfirst($criteria_type);
+      $shib_session_values = $this->shibAuth->$method();
+      $criteria = $rule->getCriteria();
+      $criteria_met = array_intersect($shib_session_values, $criteria);
+      if (empty($criteria_met)) {
+        $access_result = AccessResult::forbidden('Shibboleth access rule criteria were not met.');
+      }
+    }
+
+    // Save the access result to the user's session.
+    $this->setSessionRule($rule->id(), $access_result);
+
+    return $access_result;
+  }
+
+  /**
+   * Checks Shibboleth rule access for a request.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   */
+  public function checkAccess(Request $request, string $rule_id = '') {
+
+    $route_name = $request->attributes->get(RouteObjectInterface::ROUTE_NAME);
+
+    $access_result = AccessResult::neutral();
+
+    if (!empty($rule_id)) {
+      $access_result = $this->checkAccessRuleById($rule_id);
+    }
+    elseif (!$this->ignoreRoute($route_name)) {
+      // Ensure this route can be protected by a Shibboleth rule.
+      $path = $request->getPathInfo();
+      $access_result = $this->checkAccessByPath($path, TRUE);
+    }
+
+    // Set the access result value on the request.
+    $request->attributes->set(ShibRuleAccessInterface::ACCESS_RESULT, $access_result);
+  }
 
   /**
    * @param string $path
+   * @param bool   $return_as_object
    *
    * @return \Drupal\Core\Access\AccessResult
    */
-  protected function access(string $path, $return_as_object = FALSE) {
-    // Maybe default to neutral?
-    $access_result = AccessResult::allowed();
+  protected function checkAccessByPath(string $path, $return_as_object = FALSE) {
+
+    $access_result = AccessResult::neutral();
     $path_or_alias = $this->aliasManager->getAliasByPath($path);
+
     // Check to see if the best matches for this path are cached.
     /** @var \Drupal\shibboleth\Entity\ShibPath[] $rule_matches */
     if ($rule_matches = $this->shibPathStorage->getBestMatchesForPath($path)) {
       foreach ($rule_matches as $rule) {
-        if (!$this->checkAccessRule($rule)) {
-          $access_result = AccessResult::forbidden('Shibboleth access rule criteria not met.');
+        $rule_result = $this->checkAccessRule($rule);
+        // All checks must pass. Fail at the first access denied.
+        if ($rule_result->isForbidden()) {
+          $access_result = $rule_result;
+          break;
         }
       }
     }
+
     // Either the path isn't protected or all criteria were met.
     return $return_as_object ? $access_result : $access_result->isAllowed();
   }
 
-  public function checkAccess(Request $request) {
-    $route_name = $request->attributes->get(RouteObjectInterface::ROUTE_NAME);
-    if ($this->ignoreRoute($route_name)) {
-      // This route cannot be protected by a Shibboleth rule.
-      return TRUE;
-    }
-    $path = $request->getPathInfo();
-    $access_result = $this->access($path, TRUE);
 
-    // Allow a master request to set the access result for a subrequest: if an
-    // access result attribute is already set, don't overwrite it.
-    if (!$request->attributes->has(ShibRuleAccessInterface::ACCESS_RESULT)) {
-      $request->attributes->set(ShibRuleAccessInterface::ACCESS_RESULT, $access_result);
-    }
-    // if (!$access_result->isAllowed()) {
-    //   if ($access_result instanceof CacheableDependencyInterface && $request->isMethodCacheable()) {
-    //     throw new CacheableAccessDeniedHttpException($access_result, $access_result instanceof AccessResultReasonInterface ? $access_result->getReason() : '');
-    //   }
-    //   else {
-    //     throw new AccessDeniedHttpException($access_result instanceof AccessResultReasonInterface ? $access_result->getReason() : '');
-    //   }
-    // }
-    // return $this->access($path) ?? AccessResult::forbidden('i do not think so');
-    // return TRUE;
-  }
 
   public function checkAccessRuleById($id) {
     /** @var \Drupal\shibboleth\Entity\ShibPath $rule */
@@ -147,40 +188,9 @@ class ShibPathAccess implements ShibRuleAccessInterface {
     return $this->checkAccessRule($rule);
   }
 
-  public function checkAccessRule(ShibPath $rule) {
-
-    if (!$this->shibAuth->sessionExists()) {
-      // Maybe throw ShibbolethSessionException and catch it in the subscriber?
-      return FALSE;
-    }
-
-    if ($session_rule = $this->getSessionRule($rule->id())) {
-      return $session_rule;
-    }
-
-    $has_access = TRUE;
-    // $shib_rule = $this->shibPathStorage->load($id);
-    if ($criteria_type = $rule->get('criteria_type')) {
-      $method = 'get' . ucfirst($criteria_type);
-      $shib_session_values = $this->shibAuth->$method();
-      $criteria = $rule->getCriteria();
-      $criteria_met = array_intersect($shib_session_values, $criteria);
-      if (empty($criteria_met)) {
-        $has_access = FALSE;
-      }
-    }
-    $this->setSessionRule($rule->id(), $has_access);
-
-  }
-
-  public function checkAccessWholeSite() {
-    if ($this->isWholeSiteProtected()) {
-      // @todo Check session to see if access is cached.
-
-      // If not, perform check
-      return $this->checkAccessRuleById('all');
-    }
-    // return TRUE if user passes criteria for the full site shib path rule.
+  public function checkAccessWholeSite(Request $request) {
+    $access_result = $this->checkAccessRuleById('all');
+    $request->attributes->set(ShibRuleAccessInterface::ACCESS_RESULT, $access_result);
   }
 
   public function isWholeSiteProtected() {
