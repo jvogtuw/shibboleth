@@ -1,0 +1,5 @@
+entity.shibboleth_path_rule.add_form:
+  route_name: 'entity.shibboleth_path_rule.add_form'
+  title: 'Add protected path rule'
+  appears_on:
+    - entity.shibboleth_path_rule.collection

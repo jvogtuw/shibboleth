@@ -13,7 +13,6 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
-use Drupal\shibboleth\Authentication\ShibbolethSession;
 use Drupal\shibboleth\Form\AccountMapRequest;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\shibboleth\Authentication\ShibbolethAuthManager;
@@ -44,11 +43,6 @@ class LoginController extends ControllerBase {
    */
   private $logger;
 
-  /**
-   * @var \Drupal\shibboleth\Authentication\ShibbolethSession
-   */
-  // private $shibSession;
-
   private $login_failed;
 
   /**
@@ -69,12 +63,11 @@ class LoginController extends ControllerBase {
   /**
    * LoginController constructor.
    *
-   * @param \Drupal\shibboleth\Authentication\ShibbolethSession $shib_session
    * @param ShibbolethAuthManager                               $shib_auth
    * @param ShibbolethDrupalAuthManager                         $shib_drupal_auth
    * @param \Drupal\Core\Form\FormBuilderInterface              $form_builder
    */
-  public function __construct(/*ShibbolethSession $shib_session, */ShibbolethAuthManager $shib_auth, ShibbolethDrupalAuthManager $shib_drupal_auth, RequestStack $request_stack, FormBuilderInterface $form_builder/*, AccountInterface $current_user*/) {
+  public function __construct(ShibbolethAuthManager $shib_auth, ShibbolethDrupalAuthManager $shib_drupal_auth, RequestStack $request_stack, FormBuilderInterface $form_builder/*, AccountInterface $current_user*/) {
     // might not need
     // $this->shibSession = $shib_session;
     $this->shibAuth = $shib_auth;

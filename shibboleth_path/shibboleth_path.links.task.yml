@@ -1,0 +1,5 @@
+shibboleth.path_rules:
+  route_name: entity.shibboleth_path_rule.collection
+  title: Protected path rules
+  base_route: shibboleth.settings
+  weight: 2

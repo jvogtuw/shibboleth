@@ -8,14 +8,14 @@
 /**
  * Implements hook_install().
  */
-function shibboleth_install() {
+function shibboleth_path_install() {
   \Drupal::messenger()->addStatus(__FUNCTION__);
 }
 
 /**
  * Implements hook_uninstall().
  */
-function shibboleth_uninstall() {
+function shibboleth_path_uninstall() {
   \Drupal::messenger()->addStatus(__FUNCTION__);
 }
 
@@ -80,14 +80,14 @@ function shibboleth_uninstall() {
 /**
  * Implements hook_requirements().
  */
-function shibboleth_requirements($phase) {
+function shibboleth_path_requirements($phase) {
   $requirements = [];
 
   if ($phase == 'runtime') {
     $value = mt_rand(0, 100);
-    $requirements['shibboleth_status'] = [
-      'title' => t('Shibboleth status'),
-      'value' => t('Shibboleth value: @value', ['@value' => $value]),
+    $requirements['shibboleth_path_status'] = [
+      'title' => t('Shibboleth protected path status'),
+      'value' => t('Shibboleth protected path value: @value', ['@value' => $value]),
       'severity' => $value > 50 ? REQUIREMENT_INFO : REQUIREMENT_WARNING,
     ];
   }

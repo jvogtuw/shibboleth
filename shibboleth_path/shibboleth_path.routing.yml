@@ -1,0 +1,59 @@
+shibboleth.authenticate:
+  path: '/shibboleth/authenticate'
+  defaults:
+    _controller: '\Drupal\shibboleth\Controller\LoginController::shibAuthenticate'
+    _title: 'Shibboleth authentication only'
+  requirements:
+    _permission: 'access content'
+  options:
+    no_cache: 'TRUE'
+
+entity.shibboleth_path_rule.collection:
+  path: '/admin/config/people/shibboleth/path-rules'
+  defaults:
+    _entity_list: 'shibboleth_path_rule'
+    _title: 'Protected path rule configuration'
+  requirements:
+    _permission: 'administer shibboleth'
+
+entity.shibboleth_path_rule.add_form:
+  path: '/admin/config/people/shibboleth/path-rules/add'
+  defaults:
+    _entity_form: 'shibboleth_path_rule.add'
+    _title: 'Add a protected path rule'
+  requirements:
+    _permission: 'administer shibboleth'
+
+entity.shibboleth_path_rule.edit_form:
+  path: '/admin/config/people/shibboleth/path-rules/{shibboleth_path_rule}'
+  defaults:
+    _entity_form: 'shibboleth_path_rule.edit'
+    _title: 'Edit a protected path rule'
+  requirements:
+    _permission: 'administer shibboleth'
+
+entity.shibboleth_path_rule.delete_form:
+  path: '/admin/config/people/shibboleth/path-rules/{shibboleth_path_rule}/delete'
+  defaults:
+    _entity_form: 'shibboleth_path_rule.delete'
+    _title: 'Delete a protected path rule'
+  requirements:
+    _permission: 'administer shibboleth'
+
+#entity.shib_path.enable:
+#  path: '/admin/config/people/shibboleth/paths/{shib_path}/enable'
+#  defaults:
+#    _controller: '\Drupal\shib_path\Controller\ShibPathController::performOperation'
+#    op: enable
+#  requirements:
+#    _entity_access: shib_path.enable
+#    _csrf_token: 'TRUE'
+#
+#entity.shib_path.disable:
+#  path: '/admin/config/people/shibboleth/paths/{shib_path}/disable'
+#  defaults:
+#    _controller: '\Drupal\shib_path\Controller\ShibPathController::performOperation'
+#    op: disable
+#  requirements:
+#    _entity_access: shib_path.disable
+#    _csrf_token: 'TRUE'

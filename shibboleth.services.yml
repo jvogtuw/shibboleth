@@ -1,10 +1,10 @@
 services:
-  shibboleth.path_access_subscriber:
-    class: Drupal\shibboleth\EventSubscriber\ShibPathAccessSubscriber
-#    arguments: [ '@messenger', '@request_stack', '@current_user', '@path.matcher', '@path.current', '@path_alias.manager', '@current_route_match', '@access_manager', '@shibboleth.path_access', '@shibboleth.auth_manager']
-    arguments: [ '@messenger', '@request_stack', '@current_user', '@path.matcher', '@path.current', '@path_alias.manager', '@access_manager', '@shibboleth.path_access', '@shibboleth.auth_manager', '@logger.channel.shibboleth' ]
-    tags:
-      - { name: event_subscriber }
+#  shibboleth.path_access_subscriber:
+#    class: Drupal\shibboleth\EventSubscriber\ShibPathAccessSubscriber
+##    arguments: [ '@messenger', '@request_stack', '@current_user', '@path.matcher', '@path.current', '@path_alias.manager', '@current_route_match', '@access_manager', '@shibboleth.path_access', '@shibboleth.auth_manager']
+#    arguments: [ '@messenger', '@request_stack', '@current_user', '@path.matcher', '@path.current', '@path_alias.manager', '@access_manager', '@shibboleth.path_access', '@shibboleth.auth_manager', '@logger.channel.shibboleth' ]
+#    tags:
+#      - { name: event_subscriber }
 
 #  shibboleth.session:
 #    class: Drupal\shibboleth\Authentication\ShibbolethSession
@@ -22,9 +22,9 @@ services:
 #    class: Drupal\shibboleth\ShibPath\ShibPathAccessChecker
 #    arguments: [ '@config.factory', '@logger.channel.shibboleth', '@current_user', '@router.admin_context', '@module_handler', '@request_stack', '@messenger' ]
 
-  shibboleth.path_access:
-    class: Drupal\shibboleth\Access\ShibPathAccess
-    arguments: [ '@messenger', '@entity_type.manager', '@session', '@config.factory', '@path_alias.manager', '@shibboleth.auth_manager' ]
+#  shibboleth.path_access:
+#    class: Drupal\shibboleth\Access\ShibPathAccess
+#    arguments: [ '@messenger', '@entity_type.manager', '@session', '@config.factory', '@path_alias.manager', '@shibboleth.auth_manager' ]
 
   logger.channel.shibboleth:
     parent: logger.channel_base

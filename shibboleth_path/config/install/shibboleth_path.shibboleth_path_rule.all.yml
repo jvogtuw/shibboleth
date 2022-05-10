@@ -1,0 +1,5 @@
+id: all
+label: "All"
+pattern: "/*"
+status: false
+locked: true

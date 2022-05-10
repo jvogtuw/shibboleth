@@ -1,0 +1,27 @@
+shibboleth.shibboleth_path_rule.*:
+  type: config_entity
+  label: Protected path rule
+  mapping:
+    id:
+      type: string
+      label: ID
+    label:
+      type: label
+      label: Label
+    uuid:
+      type: string
+    pattern:
+      type: label
+      label: Path pattern
+    criteria_type:
+      type: string
+      label: Criteria type
+    criteria:
+      type: string
+      label: Criteria
+    status:
+      type: bool
+      label: Status
+    locked:
+      type: bool
+      label: Locked

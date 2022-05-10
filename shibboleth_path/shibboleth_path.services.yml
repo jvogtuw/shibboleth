@@ -1,0 +1,16 @@
+services:
+  shibboleth.path_access_subscriber:
+    class: Drupal\shibboleth_path\EventSubscriber\ShibbolethPathAccessSubscriber
+    arguments: [ '@messenger', '@request_stack', '@current_user', '@path.matcher', '@path.current', '@path_alias.manager', '@access_manager', '@shibboleth.path_access', '@shibboleth.auth_manager', '@logger.channel.shibboleth_path' ]
+    tags:
+      - { name: event_subscriber }
+
+
+  shibboleth.path_access:
+    class: Drupal\shibboleth_path\ShibbolethPathAccess
+    arguments: [ '@messenger', '@entity_type.manager', '@session', '@config.factory', '@path_alias.manager', '@shibboleth.auth_manager' ]
+
+  logger.channel.shibboleth_path:
+    parent: logger.channel_base
+    arguments: ['shibboleth_path']
+

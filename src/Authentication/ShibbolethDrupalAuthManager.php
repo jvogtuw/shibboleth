@@ -386,7 +386,7 @@ class ShibbolethDrupalAuthManager {
     $rand = new Random();
     return $rand->string(30);
   }
-  
+
   /**
    *
    */

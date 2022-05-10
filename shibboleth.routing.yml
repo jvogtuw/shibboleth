@@ -44,7 +44,7 @@ shibboleth.drupal_login:
 #  options:
 #    no_cache: 'TRUE'
 
-shibboleth.shib_auth:
+shibboleth.authenticate:
   path: '/shibboleth/authenticate'
   defaults:
     _controller: '\Drupal\shibboleth\Controller\LoginController::shibAuthenticate'
@@ -75,37 +75,37 @@ shibboleth.drupal_logout:
   options:
     no_cache: 'TRUE'
 
-entity.shib_path.collection:
-  path: '/admin/config/people/shibboleth/paths'
-  defaults:
-    _entity_list: 'shib_path'
-    _title: 'Protected path configuration'
-  requirements:
-    _permission: 'administer shibboleth'
+#entity.shib_path.collection:
+#  path: '/admin/config/people/shibboleth/paths'
+#  defaults:
+#    _entity_list: 'shib_path'
+#    _title: 'Protected path configuration'
+#  requirements:
+#    _permission: 'administer shibboleth'
 
-entity.shib_path.add_form:
-  path: '/admin/config/people/shibboleth/paths/add'
-  defaults:
-    _entity_form: 'shib_path.add'
-    _title: 'Add a protected path'
-  requirements:
-    _permission: 'administer shibboleth'
-
-entity.shib_path.edit_form:
-  path: '/admin/config/people/shibboleth/paths/{shib_path}'
-  defaults:
-    _entity_form: 'shib_path.edit'
-    _title: 'Edit a protected path'
-  requirements:
-    _permission: 'administer shibboleth'
-
-entity.shib_path.delete_form:
-  path: '/admin/config/people/shibboleth/paths/{shib_path}/delete'
-  defaults:
-    _entity_form: 'shib_path.delete'
-    _title: 'Delete a protected path'
-  requirements:
-    _permission: 'administer shibboleth'
+#entity.shib_path.add_form:
+#  path: '/admin/config/people/shibboleth/paths/add'
+#  defaults:
+#    _entity_form: 'shib_path.add'
+#    _title: 'Add a protected path'
+#  requirements:
+#    _permission: 'administer shibboleth'
+#
+#entity.shib_path.edit_form:
+#  path: '/admin/config/people/shibboleth/paths/{shib_path}'
+#  defaults:
+#    _entity_form: 'shib_path.edit'
+#    _title: 'Edit a protected path'
+#  requirements:
+#    _permission: 'administer shibboleth'
+#
+#entity.shib_path.delete_form:
+#  path: '/admin/config/people/shibboleth/paths/{shib_path}/delete'
+#  defaults:
+#    _entity_form: 'shib_path.delete'
+#    _title: 'Delete a protected path'
+#  requirements:
+#    _permission: 'administer shibboleth'
 
 #entity.shib_path.enable:
 #  path: '/admin/config/people/shibboleth/paths/{shib_path}/enable'
