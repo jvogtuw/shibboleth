@@ -34,11 +34,6 @@ class ShibbolethAuthManager {
   protected $logger;
 
   /**
-   * @var \Drupal\shibboleth\Authentication\ShibbolethSession
-   */
-  // protected $shib_session;
-
-  /**
    * @var \Symfony\Component\HttpFoundation\RequestStack
    */
   private $requestStack;
@@ -85,18 +80,15 @@ class ShibbolethAuthManager {
    * @param \Drupal\Core\Config\ConfigFactoryInterface          $config_factory
    *   The configuration factory.
    * @param \Drupal\Core\Logger\LoggerChannelInterface          $logger
-   * @param \Drupal\shibboleth\Authentication\ShibbolethSession $shib_session
-   *   The current Shibboleth session, if one exists.
    * @param \Symfony\Component\HttpFoundation\RequestStack      $request_stack
    * @param \Drupal\Core\Session\AccountInterface               $current_user
    * @param \Drupal\Core\Messenger\MessengerInterface           $messenger
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelInterface $logger/*, ShibbolethSession $shib_session*/, RequestStack $request_stack, AccountInterface $current_user, MessengerInterface $messenger, RouteMatchInterface $current_route_match) {
+  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelInterface $logger, RequestStack $request_stack, AccountInterface $current_user, MessengerInterface $messenger, RouteMatchInterface $current_route_match) {
     $this->config = $config_factory->get('shibboleth.settings');
     $this->logger = $logger;
     $this->requestStack = $request_stack;
     $this->currentRouteMatch = $current_route_match;
-    // $this->shib_session = $shib_session;
 
   }
 
