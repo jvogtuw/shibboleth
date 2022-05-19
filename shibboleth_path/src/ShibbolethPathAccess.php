@@ -94,6 +94,37 @@ class ShibbolethPathAccess implements ShibbolethPathAccessInterface {
   }
 
   /**
+   * Checks Shibboleth protected path access for a request.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   */
+  public function hasAccess(Request $request, AccountInterface $account, string $rule_id = '') {
+    // If the $rule_id is set, first check the session to see if the access
+    // has been cached.
+    // $session = $request->getSession();
+    // if ($access_result = $session->get('shibboleth_path.' . $rule_id)) {
+    //   return $access_result;
+    // }
+
+
+    $route_name = $request->attributes->get(RouteObjectInterface::ROUTE_NAME);
+
+    $access_result = AccessResult::neutral();
+
+    if (!empty($rule_id)) {
+      $access_result = $this->checkAccessRuleById($rule_id);
+    }
+    elseif (!$this->ignoreRoute($route_name)) {
+      // Ensure this route can be protected by a Shibboleth rule.
+      $path = $request->getPathInfo();
+      $access_result = $this->checkAccessByPath($path, TRUE);
+    }
+
+    // Set the access result value on the request.
+    $request->attributes->set(ShibRuleAccessInterface::ACCESS_RESULT, $access_result);
+  }
+
+  /**
    * Checks the current Shibboleth user's access based on the given rule.
    *
    * @param \Drupal\shibboleth_path\Entity\ShibbolethPathRule $rule
@@ -129,7 +160,7 @@ class ShibbolethPathAccess implements ShibbolethPathAccessInterface {
   }
 
   /**
-   * Checks Shibboleth rule access for a request.
+   * Checks Shibboleth protected path access for a request.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
    */
@@ -149,7 +180,7 @@ class ShibbolethPathAccess implements ShibbolethPathAccessInterface {
     }
 
     // Set the access result value on the request.
-    $request->attributes->set(ShibRuleAccessInterface::ACCESS_RESULT, $access_result);
+    $request->attributes->set(ShibbolethPathAccessInterface::ACCESS_RESULT, $access_result);
   }
 
   /**

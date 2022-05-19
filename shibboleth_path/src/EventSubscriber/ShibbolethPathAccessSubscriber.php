@@ -2,9 +2,12 @@
 
 namespace Drupal\shibboleth_path\EventSubscriber;
 
+use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Access\AccessManagerInterface;
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Access\AccessResultAllowed;
 use Drupal\Core\Access\AccessResultReasonInterface;
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheableResponseInterface;
 use Drupal\Core\Cache\RefinableCacheableDependencyInterface;
 use Drupal\Core\Form\EnforcedResponseException;
@@ -32,6 +35,7 @@ use Symfony\Component\ErrorHandler\ErrorRenderer\HtmlErrorRenderer;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Test\Constraint\ResponseIsRedirected;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -173,69 +177,162 @@ class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
    * @param \Symfony\Component\HttpKernel\Event\RequestEvent $event
    *   Response event.
    */
-  public function onRequestShibRule(RequestEvent $event) {
-
-    // Don't act on SubRequests.
-    // if (!$event->isMasterRequest()) {
-    //   return;
-    // }
-
-    // Do not capture redirects or modify XML HTTP Requests.
-    if ($event->getRequest()->isXmlHttpRequest()) {
-      return;
-    }
-    //
-    // dpm($this->shibPathAccess->getExcludedRoutes(), 'excluded routes');
-    // The user can bypass all protected path rules
-    if ($this->currentUser->hasPermission('bypass shibboleth rules')) {
-      $this->messenger->addStatus('This user can bypass Shibboleth access rules');
-      return;
-    }
-
-    $request = $event->getRequest();
-
-    // The whole site requires Shibboleth authentication. Enforce a check
-    // regardless of the target destination.
-    if ($this->shibPathAccess->isWholeSiteProtected()) {
-      // return;
-      try {
-        $this->shibPathAccess->checkAccess($request, 'all');
-      }
-      catch (ShibbolethSessionException $e) {
-        $response = new TrustedRedirectResponse($this->shibAuth->getAuthenticateUrl()->toString());
-        $event->setResponse($response);
-        return;
-      }
-      // $this->messenger->addStatus($this->shibAuth->getEmail());
-      // if (!$this->shibAuth->sessionExists()) {
-      //   $this->messenger->addStatus('No Shibboleth session');
-      //   // redirect to Shibboleth login handler.
-      //   $response = new TrustedRedirectResponse($this->shibAuth->getAuthenticateUrl()->toString());
-      //   $event->setResponse($response);
-      // }
-      // else {
-      //   // @see $this->onResponse() for how the results of this check are used.
-      //   $this->shibPathAccess->checkAccessWholeSite($request);
-      // }
-    }
-
-    // The request isn't valid for Shibboleth access checks.
-    if (!$this->isRequestActionable($request)) {
-      return;
-    }
-
-    // Finally, do the actual access check for the path.
-    try {
-      $this->messenger->addStatus('Checking specific access');
-      $this->shibPathAccess->checkAccess($request);
-    }
-    catch (ShibbolethSessionException $e) {
-      $response = new TrustedRedirectResponse($this->shibAuth->getAuthenticateUrl()->toString());
-      $event->setResponse($response);
-      return;
-    }
-
-  }
+  // public function onRequestShibRule(RequestEvent $event) {
+  //
+  //   if ($event->getRequest()->attributes->get('shibboleth_auth_required')) {
+  //     // dpm($event->getRequest());
+  //     $this->messenger->addStatus('shibboleth auth required in onRequestShibRule');
+  //     return;
+  //   }
+  //
+  //   // $this->logger->notice('request: ' . $event->getRequest()->getRequestUri());
+  //   if (!$event->isMasterRequest()) {
+  //     return;
+  //   }
+  //   // $cache_bins = Cache::getBins();
+  //   // dpm($cache_bins, 'cache bins');
+  //   // Only act if this is an unrouted request. See ShibbolethRouteSubscriber
+  //   // for handling of routed requests.
+  //   if (!is_null(RouteMatch::createFromRequest($event->getRequest()))) {
+  //
+  //   }
+  //   // if (!is_null(RouteMatch::createFromRequest($event->getRequest()))) {
+  //   //   // $path = $event->getRequest()->getRequestUri();
+  //   //   // $this->logger->notice('this request IS routed: ' . $path);
+  //   //   $this->messenger->addStatus('this request IS routed');
+  //   //   return;
+  //   // }
+  //   // $path = $event->getRequest()->getUri();
+  //   // $this->logger->notice('This was an unrouted request: ' . $path);
+  //   // // dpm($event->getRequest()->attributes, 'request attributes');
+  //   // // check if request URI is not routed
+  //   // // $request_uri = $event->getRequest()->getUri();
+  //   // // $this->messenger->addStatus('getUri(): ' . $request_uri);
+  //   // // $request_uri2 = $event->getRequest()->getRequestUri();
+  //   // // $this->messenger->addStatus('getRequestUri(): ' . $request_uri2);
+  //   // // $kernel = $event->getKernel();
+  //   // // dpm($kernel, 'kernel');
+  //   // // The user can bypass all protected path rules
+  //   // if ($this->currentUser->hasPermission('bypass shibboleth rules')) {
+  //   //   $this->messenger->addStatus('This user can bypass Shibboleth access rules');
+  //     return;
+  //   // }
+  //
+  //   $request = $event->getRequest();
+  //
+  //
+  //   // Do not capture redirects or modify XML HTTP Requests.
+  //   if ($request->isXmlHttpRequest()) {
+  //     $path = $request->getRequestUri();
+  //     $this->logger->notice('Skipped request: ' . $path);
+  //     return;
+  //   }
+  //
+  //   // The whole site requires Shibboleth authentication. Enforce a check
+  //   // regardless of the target destination.
+  //   if ($this->shibPathAccess->isWholeSiteProtected()) {
+  //     // return;
+  //     try {
+  //       $this->shibPathAccess->checkAccess($request, 'all');
+  //     }
+  //     catch (ShibbolethSessionException $e) {
+  //       $response = new TrustedRedirectResponse($this->shibAuth->getAuthenticateUrl()->toString());
+  //       $event->setResponse($response);
+  //       return;
+  //     }
+  //     // $this->messenger->addStatus($this->shibAuth->getEmail());
+  //     // if (!$this->shibAuth->sessionExists()) {
+  //     //   $this->messenger->addStatus('No Shibboleth session');
+  //     //   // redirect to Shibboleth login handler.
+  //     //   $response = new TrustedRedirectResponse($this->shibAuth->getAuthenticateUrl()->toString());
+  //     //   $event->setResponse($response);
+  //     // }
+  //     // else {
+  //     //   // @see $this->onResponse() for how the results of this check are used.
+  //     //   $this->shibPathAccess->checkAccessWholeSite($request);
+  //     // }
+  //   }
+  //
+  //   // The request isn't valid for Shibboleth access checks.
+  //   if (!$this->isRequestActionable($request)) {
+  //     return;
+  //   }
+  //
+  //   // Finally, do the actual access check for the path.
+  //   // try {
+  //   //   $this->messenger->addStatus('Checking specific access');
+  //   //   $this->shibPathAccess->checkAccess($request);
+  //   // }
+  //   // catch (ShibbolethSessionException $e) {
+  //   //   $this->messenger->addError('no shib session accesssubscriber');
+  //   //   $response = new TrustedRedirectResponse($this->shibAuth->getAuthenticateUrl()->toString());
+  //   //   $event->setResponse($response);
+  //   //   // return;
+  //   // }
+  //
+  //
+  //   /** From here down was the original attempt */
+  //   // // Don't act on SubRequests.
+  //   // // if (!$event->isMasterRequest()) {
+  //   // //   return;
+  //   // // }
+  //   //
+  //   // // Do not capture redirects or modify XML HTTP Requests.
+  //   // if ($event->getRequest()->isXmlHttpRequest()) {
+  //   //   return;
+  //   // }
+  //   // //
+  //   // // dpm($this->shibPathAccess->getExcludedRoutes(), 'excluded routes');
+  //   // // The user can bypass all protected path rules
+  //   // if ($this->currentUser->hasPermission('bypass shibboleth rules')) {
+  //   //   $this->messenger->addStatus('This user can bypass Shibboleth access rules');
+  //   //   return;
+  //   // }
+  //   //
+  //   // $request = $event->getRequest();
+  //   //
+  //   // // The whole site requires Shibboleth authentication. Enforce a check
+  //   // // regardless of the target destination.
+  //   // if ($this->shibPathAccess->isWholeSiteProtected()) {
+  //   //   // return;
+  //   //   try {
+  //   //     $this->shibPathAccess->checkAccess($request, 'all');
+  //   //   }
+  //   //   catch (ShibbolethSessionException $e) {
+  //   //     $response = new TrustedRedirectResponse($this->shibAuth->getAuthenticateUrl()->toString());
+  //   //     $event->setResponse($response);
+  //   //     return;
+  //   //   }
+  //   //   // $this->messenger->addStatus($this->shibAuth->getEmail());
+  //   //   // if (!$this->shibAuth->sessionExists()) {
+  //   //   //   $this->messenger->addStatus('No Shibboleth session');
+  //   //   //   // redirect to Shibboleth login handler.
+  //   //   //   $response = new TrustedRedirectResponse($this->shibAuth->getAuthenticateUrl()->toString());
+  //   //   //   $event->setResponse($response);
+  //   //   // }
+  //   //   // else {
+  //   //   //   // @see $this->onResponse() for how the results of this check are used.
+  //   //   //   $this->shibPathAccess->checkAccessWholeSite($request);
+  //   //   // }
+  //   // }
+  //   //
+  //   // // The request isn't valid for Shibboleth access checks.
+  //   // if (!$this->isRequestActionable($request)) {
+  //   //   return;
+  //   // }
+  //   //
+  //   // // Finally, do the actual access check for the path.
+  //   // try {
+  //   //   $this->messenger->addStatus('Checking specific access');
+  //   //   $this->shibPathAccess->checkAccess($request);
+  //   // }
+  //   // catch (ShibbolethSessionException $e) {
+  //   //   $response = new TrustedRedirectResponse($this->shibAuth->getAuthenticateUrl()->toString());
+  //   //   $event->setResponse($response);
+  //   //   return;
+  //   // }
+  //
+  // }
 
   /**
    * Determines if this is a valid request to pass through Shibboleth access
@@ -245,22 +342,22 @@ class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
    *
    * @return bool
    */
-  protected function isRequestActionable(Request $request) {
-    $actionable = TRUE;
-    if (!preg_match('/index\.php$/', $request->getScriptName())) {
-      // Do not check Shibboleth rules if the root script is not /index.php.
-      $actionable = FALSE;
-    }
-    elseif (!($request->isMethod('GET') || $request->isMethod('HEAD'))) {
-      // Do not check Shibboleth rules if this is other than GET request.
-      $actionable = FALSE;
-    }
-    elseif (!$this->accessManager->checkRequest($request)) {
-      // Do not check Shibboleth rules if access is denied by Drupal.
-      $actionable = FALSE;
-    }
-    return $actionable;
-  }
+  // protected function isRequestActionable(Request $request) {
+  //   $actionable = TRUE;
+  //   if (!preg_match('/index\.php$/', $request->getScriptName())) {
+  //     // Do not check Shibboleth rules if the root script is not /index.php.
+  //     $actionable = FALSE;
+  //   }
+  //   elseif (!($request->isMethod('GET') || $request->isMethod('HEAD'))) {
+  //     // Do not check Shibboleth rules if this is other than GET request.
+  //     $actionable = FALSE;
+  //   }
+  //   elseif (!$this->accessManager->checkRequest($request)) {
+  //     // Do not check Shibboleth rules if access is denied by Drupal.
+  //     $actionable = FALSE;
+  //   }
+  //   return $actionable;
+  // }
 
   /**
    * Kernel response event handler.
@@ -270,29 +367,48 @@ class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
    */
   public function onResponseShibRule(ResponseEvent $event) {
 
-    if (!$event->isMainRequest()) {
-      return;
+    // if (!$event->isMainRequest()) {
+    //   return;
+    // }
+
+    // $access_result = $event->getRequest()->attributes->get(AccessAwareRouterInterface::ACCESS_RESULT);
+    // dpm($access_result instanceof AccessResultAllowed, 'access result');
+    if ($event->getRequest()->attributes->get('shibboleth_auth_required')) {
+      $event->getRequest()->attributes->remove('shibboleth_auth_required');
+      $this->messenger->addStatus('shib session required onResponseShibRule');
+      $auth_redirect = $this->shibAuth->getAuthenticateUrl();
+      $response = new TrustedRedirectResponse($auth_redirect);
+      $event->setResponse($response);
+
     }
 
     $response = $event->getResponse();
+    // // $response->
     if (!$response instanceof CacheableResponseInterface) {
-      $this->messenger->addStatus('hello');
+      // $this->messenger->addStatus('is not a cacheable response');
       return;
     }
-
-    $request = $event->getRequest();
-    /** @var \Drupal\Core\Access\AccessResultReasonInterface $access_result */
-    $access_result = $request->attributes->get(ShibbolethPathAccessInterface::ACCESS_RESULT);
-    $response->addCacheableDependency($access_result);
-
-    if (isset($access_result) && $access_result->isForbidden()) {
-      if ($access_result instanceof CacheableDependencyInterface && $request->isMethodCacheable()) {
-        throw new CacheableAccessDeniedHttpException($access_result, $access_result instanceof AccessResultReasonInterface ? $access_result->getReason() : '');
-      }
-      else {
-        throw new AccessDeniedHttpException($access_result instanceof AccessResultReasonInterface ? $access_result->getReason() : '');
-      }
-    }
+    // else {
+    //   $response->expire();
+    //   $this->messenger->addStatus('is a cacheable response');
+    // }
+    // $response->addCacheableDependency('shibboleth_rule');
+    // $response->getCacheableMetadata()->addCacheTags(['shibboleth_rule']);
+    // $request = $event->getRequest();
+    // /** @var \Drupal\Core\Access\AccessResultReasonInterface $access_result */
+    // $access_result = $request->attributes->get(ShibbolethPathAccessInterface::ACCESS_RESULT);
+    // dpm($request->attributes->all(), 'attributes');
+    // $this->messenger->addStatus('access result: ' . $access_result);
+    // $response->addCacheableDependency($access_result);
+    //
+    // if (isset($access_result) && $access_result->isForbidden()) {
+    //   if ($access_result instanceof CacheableDependencyInterface && $request->isMethodCacheable()) {
+    //     throw new CacheableAccessDeniedHttpException($access_result, $access_result instanceof AccessResultReasonInterface ? $access_result->getReason() : '');
+    //   }
+    //   else {
+    //     throw new AccessDeniedHttpException($access_result instanceof AccessResultReasonInterface ? $access_result->getReason() : '');
+    //   }
+    // }
 
   }
 
@@ -302,7 +418,9 @@ class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      KernelEvents::REQUEST => ['onRequestShibRule'],
+      // Perform after Authentication and RouterNormalizer
+      // KernelEvents::REQUEST => ['onRequestShibRule'],
+      // KernelEvents::REQUEST => ['onRequestShibRule', 32],
       KernelEvents::RESPONSE => ['onResponseShibRule', 15],
     ];
   }

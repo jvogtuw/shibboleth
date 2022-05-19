@@ -119,7 +119,7 @@ class ShibbolethPathRule extends ConfigEntityBase implements ShibbolethPathRuleI
     // Ensure that the path is internal
     // Ensure that the path starts with a slash (/)
     $path_regex = '/^\//i';
-    if (!preg_match($path_regex, $this->path)) {
+    if (!preg_match($path_regex, $this->pattern)) {
       // throw new ConfigValueException('')
     }
     // @todo Check if path is unique

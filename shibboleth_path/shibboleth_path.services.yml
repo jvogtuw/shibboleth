@@ -5,12 +5,33 @@ services:
     tags:
       - { name: event_subscriber }
 
+  shibboleth_path.route_subscriber:
+    class: Drupal\shibboleth_path\EventSubscriber\ShibbolethPathRouteSubscriber
+    tags:
+      - { name: event_subscriber }
+
+  shibboleth_path.access_check.route:
+    class: Drupal\shibboleth_path\Access\ShibbolethPathAccessCheck
+#    arguments: [ '@request_stack', '@shibboleth.path_access_handler', '@messenger', '@shibboleth.auth_manager', '@cache.shibboleth', '@entity_type.manager' ]
+    arguments: [ '@request_stack', '@messenger', '@shibboleth.auth_manager', '@cache.shibboleth', '@entity_type.manager', '@path_alias.manager', '@page_cache_kill_switch' ]
+    tags:
+      - { name: access_check, applies_to: _shibboleth_path_access }
 
   shibboleth.path_access:
     class: Drupal\shibboleth_path\ShibbolethPathAccess
     arguments: [ '@messenger', '@entity_type.manager', '@session', '@config.factory', '@path_alias.manager', '@shibboleth.auth_manager' ]
 
+  shibboleth.path_access_handler:
+    class: Drupal\shibboleth_path\ShibbolethPathAccessHandler
+    arguments: [ '@shibboleth.auth_manager', '@cache.shibboleth', '@entity_type.manager' ]
+
   logger.channel.shibboleth_path:
     parent: logger.channel_base
     arguments: ['shibboleth_path']
 
+  cache.shibboleth:
+    class: Drupal\Core\Cache\CacheBackendInterface
+    tags:
+      - { name: cache.bin }
+    factory: ['@cache_factory', 'get']
+    arguments: [shibboleth]

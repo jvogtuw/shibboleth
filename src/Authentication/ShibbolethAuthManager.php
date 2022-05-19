@@ -228,7 +228,6 @@ class ShibbolethAuthManager {
   }
 
   public function getLoginUrl() {
-    $force_https = $this->config->get('force_https_on_login');
 
     // Set the destination to redirect to after successful login.
     $destination = '';
@@ -264,12 +263,15 @@ class ShibbolethAuthManager {
 
     // Shibboleth will redirect to this 'target' route after successfully
     // creating a new Shibboleth session.
+    // $auth_route = $authenticate_only ? 'shibboleth.authenticate' : 'shibboleth.drupal_login';
     $shib_login_url = Url::fromRoute('shibboleth.drupal_login', [], $destination_options)->toString();
     $target_options = [
       'query' => [
         'target' => $shib_login_url,
       ],
     ];
+
+    $force_https = $this->config->get('force_https_on_login');
     if ($force_https) {
       $target_options['https'] = TRUE;
       if (empty($_SERVER['HTTPS'])) {
@@ -288,6 +290,71 @@ class ShibbolethAuthManager {
       $login_url = Url::fromUserInput($login_handler, $target_options);
     }
     return $login_url;
+  }
+
+  public function getAuthenticateUrl() {
+    // Set the destination to redirect to after successful login.
+    $target = '';
+    // Use the configured redirect destination for all logins.
+    // if (!empty($this->config->get('login_redirect'))) {
+    //   $destination = Url::fromUserInput($this->config->get('login_redirect'))->toString();
+    // }
+    // else {
+      // The login redirect isn't set in the configuration, so use the current
+      // path. The destination is local and absolute, always starting with a /.
+
+      // First, check if the current route is the Shibboleth login page. This
+      // happens upon failure to login to Drupal with a Shibboleth user.
+      // If so, set the destination to the original destination or the front page.
+      if ($this->currentRouteMatch->getRouteName() == 'shibboleth.drupal_login') {
+        // $destination = $this->requestStack->getCurrentRequest()->query->get('destination') ?? '<front>';
+        return $this->getLoginUrl();
+      }
+      else {
+        // Otherwise, use the current path as the destination.
+        // Grab the base path in case the site is a subsite.
+        $base_path = $this->requestStack->getCurrentRequest()->getBasePath();
+        $target = $base_path . $this->requestStack->getCurrentRequest()->getPathInfo();
+      }
+
+    // }
+    $target_options = [
+      // Set this just in case, to make sure the destination starts with a /.
+      'absolute' => TRUE,
+      'query' => [
+        'target' => $target,
+      ],
+    ];
+
+    // Shibboleth will redirect to this 'target' route after successfully
+    // creating a new Shibboleth session.
+    // $auth_route = $authenticate_only ? 'shibboleth.authenticate' : 'shibboleth.drupal_login';
+    // $shib_login_url = Url::fromRoute('shibboleth.drupal_login', [], $target_options)->toString();
+    // $target_options = [
+    //   'query' => [
+    //     'target' => $shib_login_url,
+    //   ],
+    // ];
+
+    // $force_https = $this->config->get('force_https_on_login');
+    // if ($force_https) {
+    //   $target_options['https'] = TRUE;
+    //   if (empty($_SERVER['HTTPS'])) {
+    //     $target_options['absolute'] = TRUE;
+    //   }
+    // }
+
+    $login_handler = $this->getLoginHandlerUrl();
+    $login_url = '';
+    // The login handler is an absolute URL.
+    if (parse_url($login_handler, PHP_URL_HOST)) {
+      $login_url = Url::fromUri($login_handler, $target_options);
+    }
+    else {
+      // Otherwise, the login handler is local.
+      $login_url = Url::fromUserInput($login_handler, $target_options);
+    }
+    return $login_url->toString();
   }
 
   public function getLogoutUrl() {
@@ -350,51 +417,6 @@ class ShibbolethAuthManager {
     // return Link::fromTextAndUrl($link_text, $login_url)->toString();
   }
 
-  /**
-   * @return \Drupal\Core\Url
-   */
-  public function getAuthenticateUrl() {
-    $force_https = $this->config->get('force_https_on_login');
-
-
-    // Use the current path as the redirect destination.
-    // Grab the base path in case the site is a subsite.
-    $base_path = $this->requestStack->getCurrentRequest()->getBasePath();
-    $destination = $base_path . $this->requestStack->getCurrentRequest()->getPathInfo();
-
-    $destination_options = [
-      // Set this just in case, to make sure the destination starts with a /.
-      'absolute' => TRUE,
-      'query' => [
-        'target' => $destination,
-      ],
-    ];
-
-    // Shibboleth will redirect to this 'target' route after successfully
-    // creating a new Shibboleth session.
-    $shib_login_url = Url::fromRoute('shibboleth.drupal_login', [], $destination_options)->toString();
-    $target_options = [
-      'query' => [
-        'target' => $shib_login_url,
-      ],
-    ];
-    if ($force_https) {
-      $target_options['https'] = TRUE;
-      if (empty($_SERVER['HTTPS'])) {
-        $target_options['absolute'] = TRUE;
-      }
-    }
-
-    $login_handler = $this->getLoginHandlerUrl();
-    $authenticate_url = '';
-    if (parse_url($login_handler, PHP_URL_HOST)) {
-      $authenticate_url = Url::fromUri($login_handler, $destination_options);
-    }
-    else {
-      $authenticate_url = Url::fromUserInput($login_handler, $destination_options);
-    }
-    return $authenticate_url;
-  }
 
   public function getLoginLink() {
     $link_text = $this->config->get('login_link_text');
