@@ -18,11 +18,6 @@ class ShibbolethPathRouteSubscriber extends RouteSubscriberBase {
     foreach ($collection->all() as $route) {
       // Check Shibboleth path protection rules for all routes.
       $route->setRequirement('_shibboleth_path_access', 'Drupal\shibboleth_path\Access\ShibbolethPathAccessCheck::access');
-
-      // Hide taxonomy pages from unprivileged users.
-      // if (strpos($route->getPath(), '/taxonomy/term') === 0) {
-      //   $route->setRequirement('_role', 'administrator');
-      // }
     }
   }
 
