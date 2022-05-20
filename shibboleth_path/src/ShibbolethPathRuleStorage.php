@@ -91,7 +91,7 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
    *   The local, absolute path to check.
    * @param bool   $include_disabled
    *
-   * @return ShibPath[]
+   * @return \Drupal\shibboleth_path\Entity\ShibbolethPathRule[]
    *   Returns an array of the best (most granular) match(es) for the given path.
    */
   public function getBestMatchesForPath(string $path, $include_disabled = FALSE) {
@@ -136,7 +136,6 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
         }
       }
     }
-    // $this->memoryCache->
     return $best_matches;
   }
 
@@ -147,6 +146,7 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
     $return = parent::save($entity);
     $this->shibbolethCache->deleteAll();
     $this->messenger->addStatus($this->t('Shibboleth paths cache cleared.'));
+    // or should i invalidate all?
     $this->pageCache->deleteAll();
     $this->messenger->addStatus($this->t('Page cache cleared.'));
     return $return;

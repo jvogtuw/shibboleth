@@ -2,24 +2,19 @@
 
 namespace Drupal\shibboleth_path\Access;
 
-use Drupal\bootstrap\Plugin\Preprocess\Page;
-use Drupal\Core\Access\AccessManagerInterface;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultAllowed;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Messenger\MessengerInterface;
+// use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
 use Drupal\Core\Routing\Access\AccessInterface;
 use Drupal\Core\Routing\AccessAwareRouterInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\node\Plugin\views\filter\Access;
 use Drupal\path_alias\AliasManagerInterface;
 use Drupal\shibboleth\Authentication\ShibbolethAuthManager;
 use Drupal\shibboleth\Exception\ShibbolethSessionException;
-use Drupal\shibboleth_path\ShibbolethPathAccessHandlerInterface;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Route;
 
@@ -38,7 +33,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
   /**
    * @var \Drupal\Core\Messenger\MessengerInterface
    */
-  private $messenger;
+  // private $messenger;
 
   /**
    * @var \Drupal\shibboleth\Authentication\ShibbolethAuthManager
@@ -68,11 +63,10 @@ class ShibbolethPathAccessCheck implements AccessInterface {
   private $killSwitch;
 
 
-  public function __construct(RequestStack $request_stack/*, ShibbolethPathAccessHandlerInterface $shibboleth_path_access_handler*/, MessengerInterface $messenger, ShibbolethAuthManager $shibboleth_auth_manager, CacheBackendInterface $shibboleth_cache, EntityTypeManagerInterface $entity_type_manager, AliasManagerInterface $alias_manager, KillSwitch $kill_switch) {
+  public function __construct(RequestStack $request_stack/*, ShibbolethPathAccessHandlerInterface $shibboleth_path_access_handler, MessengerInterface $messenger*/, ShibbolethAuthManager $shibboleth_auth_manager, CacheBackendInterface $shibboleth_cache, EntityTypeManagerInterface $entity_type_manager, AliasManagerInterface $alias_manager, KillSwitch $kill_switch) {
 
     $this->requestStack = $request_stack;
-    // $this->shibbolethPathAccessHandler = $shibboleth_path_access_handler;
-    $this->messenger = $messenger;
+    // $this->messenger = $messenger;
     $this->shibbolethAuthManager = $shibboleth_auth_manager;
     $this->shibbolethCache = $shibboleth_cache;
     $this->pathRuleStorage = $entity_type_manager->getStorage('shibboleth_path_rule');
@@ -81,11 +75,6 @@ class ShibbolethPathAccessCheck implements AccessInterface {
   }
 
   public function access(Route $route, RouteMatchInterface $route_match, AccountInterface $account) {
-    // $this->requestStack->getCurrentRequest()->attributes->remove('shibboleth_auth_required');
-    // $this->messenger->addStatus('just inside access()');
-    // if (!$this->requestStack->getMasterRequest()) {
-    //   return;
-    // }
 
     // If the user doesn't have access according to Drupal, don't bother checking
     // the Shibboleth path access.
@@ -96,7 +85,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
 
     try {
 
-      if ($access_result = $this->checkAccess($route)) {
+      if ($this->checkAccess($route)) {
         return AccessResult::allowed();
       } else {
         return AccessResult::forbidden();
@@ -122,7 +111,6 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    * @return bool
    */
   protected function checkAccess(Route $route) {
-    $path = $route->getPath();
     $path = $this->requestStack->getCurrentRequest()->getPathInfo();
 
     // Swap the path out for the alias if available.
@@ -135,6 +123,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
       $path_rules = $cached_path['rules'];
     }
     else {
+      /** @var \Drupal\shibboleth_path\Entity\ShibbolethPathRule $path_rules[] */
       $path_rules = $this->pathRuleStorage->getBestMatchesForPath($path);
 
       // Build the data for the cache item.
@@ -154,7 +143,6 @@ class ShibbolethPathAccessCheck implements AccessInterface {
     // Can't continue if there's no Shibboleth session.
     if (!$this->shibbolethAuthManager->sessionExists()) {
       // Delete any existing rule checks from the session and throw an exception.
-      // $this->clearSessionAccessChecks();
       throw new ShibbolethSessionException('No Shibboleth session found.');
     }
 
@@ -189,9 +177,9 @@ class ShibbolethPathAccessCheck implements AccessInterface {
     $this->setShibCacheItem('shib_path:' . $path, $data);
   }
 
-  protected function getRuleCache($rule_id) {
-    return $this->getShibCacheItem('shib_rule:' . $rule_id);
-  }
+  // protected function getRuleCache($rule_id) {
+  //   return $this->getShibCacheItem('shib_rule:' . $rule_id);
+  // }
 
   protected function getShibCacheItem($cid) {
     if ($cache = $this->shibbolethCache->get($cid)) {
