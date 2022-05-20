@@ -18,22 +18,15 @@ use Drupal\shibboleth\Exception\ShibbolethSessionException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Route;
 
+/**
+ * Checks a Shibboleth user's access to the current path.
+ */
 class ShibbolethPathAccessCheck implements AccessInterface {
 
   /**
    * @var \Symfony\Component\HttpFoundation\RequestStack
    */
   private $requestStack;
-
-  /**
-   * @var \Drupal\shibboleth_path\ShibbolethPathAccessHandlerInterface
-   */
-  // private $shibbolethPathAccessHandler;
-
-  /**
-   * @var \Drupal\Core\Messenger\MessengerInterface
-   */
-  // private $messenger;
 
   /**
    * @var \Drupal\shibboleth\Authentication\ShibbolethAuthManager
@@ -63,10 +56,20 @@ class ShibbolethPathAccessCheck implements AccessInterface {
   private $killSwitch;
 
 
-  public function __construct(RequestStack $request_stack/*, ShibbolethPathAccessHandlerInterface $shibboleth_path_access_handler, MessengerInterface $messenger*/, ShibbolethAuthManager $shibboleth_auth_manager, CacheBackendInterface $shibboleth_cache, EntityTypeManagerInterface $entity_type_manager, AliasManagerInterface $alias_manager, KillSwitch $kill_switch) {
+  /**
+   * @param \Symfony\Component\HttpFoundation\RequestStack          $request_stack
+   * @param \Drupal\shibboleth\Authentication\ShibbolethAuthManager $shibboleth_auth_manager
+   * @param \Drupal\Core\Cache\CacheBackendInterface                $shibboleth_cache
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface          $entity_type_manager
+   * @param \Drupal\path_alias\AliasManagerInterface                $alias_manager
+   * @param \Drupal\Core\PageCache\ResponsePolicy\KillSwitch        $kill_switch
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
+  public function __construct(RequestStack $request_stack, ShibbolethAuthManager $shibboleth_auth_manager, CacheBackendInterface $shibboleth_cache, EntityTypeManagerInterface $entity_type_manager, AliasManagerInterface $alias_manager, KillSwitch $kill_switch) {
 
     $this->requestStack = $request_stack;
-    // $this->messenger = $messenger;
     $this->shibbolethAuthManager = $shibboleth_auth_manager;
     $this->shibbolethCache = $shibboleth_cache;
     $this->pathRuleStorage = $entity_type_manager->getStorage('shibboleth_path_rule');
@@ -74,6 +77,19 @@ class ShibbolethPathAccessCheck implements AccessInterface {
     $this->killSwitch = $kill_switch;
   }
 
+  /**
+   * Determines a user's access to the request path.
+   *
+   * @param \Symfony\Component\Routing\Route $route
+   *   The route to check against.
+   * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
+   *   The parametrized route
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The currently logged in account.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
+   */
   public function access(Route $route, RouteMatchInterface $route_match, AccountInterface $account) {
 
     // If the user doesn't have access according to Drupal, don't bother checking
@@ -104,9 +120,13 @@ class ShibbolethPathAccessCheck implements AccessInterface {
   }
 
   /**
-   * Do the actual access check.
+   * Checks if the current Shibboleth user meets the criteria to access the path.
    *
    * @return bool
+   *   Returns TRUE if the Shibboleth user meets the criteria. FALSE otherwise.
+   *
+   * @throws ShibbolethSessionException
+   *   Exception thrown when no active Shibboleth session is found.
    */
   protected function checkAccess() {
     $path = $this->requestStack->getCurrentRequest()->getPathInfo();
@@ -147,7 +167,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
     // At this point, the path is protected and there's a Shibboleth session.
     // We'll assume access until we check the other criteria.
     $criteria_met = TRUE;
-    /** @var \Drupal\shibboleth_path\Entity\ShibbolethPathRule $path_rule */
+    // /** @var \Drupal\shibboleth_path\Entity\ShibbolethPathRule $path_rule */
     foreach ($path_rules as $path_rule) {
       $criteria_type = $path_rule->get('criteria_type');
       $criteria = $path_rule->getCriteria();
@@ -167,27 +187,49 @@ class ShibbolethPathAccessCheck implements AccessInterface {
     return $criteria_met;
   }
 
-  protected function getPathCache($path) {
-    return $this->getShibCacheItem('shib_path:' . $path);
-  }
-
-  protected function setPathCache($path, $data) {
-    $this->setShibCacheItem('shib_path:' . $path, $data);
-  }
-
-  // protected function getRuleCache($rule_id) {
-  //   return $this->getShibCacheItem('shib_rule:' . $rule_id);
-  // }
-
-  protected function getShibCacheItem($cid) {
+  /**
+   * Gets the cached Shibboleth path rules for the given path.
+   *
+   * @param string $path
+   *   The path or alias if available.
+   *
+   * @return array|FALSE
+   *   Returns the cached data for the path. The returned array contains a
+   *   'rules' array of ShibbolethPathRule objects. The rules array is empty if
+   *   no rules protect the path. Returns FALSE if the path has not been cached.
+   */
+  protected function getPathCache(string $path) {
+    $cid = 'shib_path:' . $path;
     if ($cache = $this->shibbolethCache->get($cid)) {
       return $cache->data;
     }
     return FALSE;
   }
-  protected function setShibCacheItem($cid, $data) {
+
+  /**
+   * Sets the Shibboleth path rules that protect the path.
+   *
+   * @param string $path
+   *   The path or alias if available.
+   * @param array  $data
+   *   The data to cache. Should contain an array of ShibbolethPathRules with
+   *   the key 'rules'.
+   */
+  protected function setPathCache(string $path, array $data) {
+    $cid = 'shib_path:' . $path;
     $this->shibbolethCache->set($cid, $data);
+    // $this->setShibCacheItem('shib_path:' . $path, $data);
   }
+
+  // protected function getShibCacheItem($cid) {
+  //   if ($cache = $this->shibbolethCache->get($cid)) {
+  //     return $cache->data;
+  //   }
+  //   return FALSE;
+  // }
+  // protected function setShibCacheItem($cid, $data) {
+  //   $this->shibbolethCache->set($cid, $data);
+  // }
 
   // protected function clearSessionAccessChecks() {
   //   // $this->requestStack->getCurrentRequest()->getSession()->getBag('shibboleth_path')->clear();
