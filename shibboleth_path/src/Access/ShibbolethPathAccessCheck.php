@@ -85,7 +85,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
 
     try {
 
-      if ($this->checkAccess($route)) {
+      if ($this->checkAccess()) {
         return AccessResult::allowed();
       } else {
         return AccessResult::forbidden();
@@ -106,11 +106,9 @@ class ShibbolethPathAccessCheck implements AccessInterface {
   /**
    * Do the actual access check.
    *
-   * @param \Symfony\Component\Routing\Route $route
-   *
    * @return bool
    */
-  protected function checkAccess(Route $route) {
+  protected function checkAccess() {
     $path = $this->requestStack->getCurrentRequest()->getPathInfo();
 
     // Swap the path out for the alias if available.
