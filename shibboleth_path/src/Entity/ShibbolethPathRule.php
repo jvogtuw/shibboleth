@@ -106,11 +106,17 @@ class ShibbolethPathRule extends ConfigEntityBase implements ShibbolethPathRuleI
    */
   protected $locked;
 
-
+  /**
+   * @var string[]
+   */
   private $criteria_list;
 
   /**
+   * Performs validation checks on the rule's path pattern before saving.
+   *
    * {@inheritdoc}
+   *
+   * @todo Add the validation.
    */
   public function preSave(EntityStorageInterface $storage) {
     parent::preSave($storage);
@@ -125,6 +131,9 @@ class ShibbolethPathRule extends ConfigEntityBase implements ShibbolethPathRuleI
     // @todo Check if path is unique
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getCriteria($asArray = TRUE) {
 
     if (!$asArray) {
@@ -137,6 +146,11 @@ class ShibbolethPathRule extends ConfigEntityBase implements ShibbolethPathRuleI
     return $this->criteria_list;
   }
 
+  /**
+   * Sets the value of $this->criteria_list.
+   *
+   * Transforms the value of $this->criteria from a string to an array.
+   */
   private function setCriteriaList() {
     $criteria_list = [];
     if (!empty($this->criteria)) {

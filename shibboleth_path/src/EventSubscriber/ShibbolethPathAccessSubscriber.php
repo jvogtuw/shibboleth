@@ -35,7 +35,7 @@ class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
    * @param \Symfony\Component\HttpKernel\Event\ResponseEvent $event
    *   Response event.
    */
-  public function onResponseShibRule(ResponseEvent $event) {
+  public function onResponseShibbolethPathRule(ResponseEvent $event) {
 
     if ($event->getRequest()->attributes->get('shibboleth_auth_required')) {
       $event->getRequest()->attributes->remove('shibboleth_auth_required');
@@ -45,10 +45,6 @@ class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
       $event->setResponse($response);
     }
 
-    // $response = $event->getResponse();
-    // if (!$response instanceof CacheableResponseInterface) {
-    //   return;
-    // }
   }
 
 
@@ -58,7 +54,7 @@ class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
   public static function getSubscribedEvents() {
     return [
       // Perform after Authentication and RouterNormalizer
-      KernelEvents::RESPONSE => ['onResponseShibRule', 15],
+      KernelEvents::RESPONSE => ['onResponseShibbolethPathRule', 15],
     ];
   }
 

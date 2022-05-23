@@ -17,10 +17,6 @@ class ShibbolethPathRuleForm extends EntityForm {
    * {@inheritdoc}
    */
   public function form(array $form, FormStateInterface $form_state) {
-    // /** @var \Drupal\shibboleth_path\ShibbolethPathRuleStorageInterface $storage */
-    // $storage = $this->entityTypeManager->getStorage('shibboleth_path_rule');
-    // $paths = $storage->getExcludedPaths();
-    // dpm($paths, 'excluded paths');
     $form = parent::form($form, $form_state);
 
     $locked = $this->entity->get('locked');
