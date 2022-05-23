@@ -41,7 +41,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
   protected $shibbolethCache;
 
   /**
-   * @var \Drupal\shibboleth_path\Entity\ShibbolethPathRule
+   * @var \Drupal\shibboleth_path\ShibbolethPathRuleStorageInterface
    */
   private $pathRuleStorage;
 
@@ -142,7 +142,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
     }
     else {
       /** @var \Drupal\shibboleth_path\Entity\ShibbolethPathRule $path_rules[] */
-      $path_rules = $this->pathRuleStorage->getBestMatchesForPath($path);
+      $path_rules = $this->pathRuleStorage->getMatchingRules($path);
 
       // Build the data for the cache item.
       $data = ['rules' => $path_rules];

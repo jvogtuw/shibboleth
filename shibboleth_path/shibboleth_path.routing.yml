@@ -8,6 +8,14 @@ shibboleth.authenticate:
   options:
     no_cache: 'TRUE'
 
+shibboleth_path.settings:
+  path: '/admin/config/people/shibboleth/path-rules-settings'
+  defaults:
+    _title: 'Path rules settings'
+    _form: 'Drupal\shibboleth_path\Form\ShibbolethPathSettings'
+  requirements:
+    _permission: 'administer shibboleth'
+
 entity.shibboleth_path_rule.collection:
   path: '/admin/config/people/shibboleth/path-rules'
   defaults:

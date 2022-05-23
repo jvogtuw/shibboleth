@@ -1,4 +1,4 @@
-shibboleth.shibboleth_path_rule.*:
+shibboleth_path.shibboleth_path_rule.*:
   type: config_entity
   label: Protected path rule
   mapping:

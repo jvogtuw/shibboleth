@@ -1,5 +1,11 @@
 entity.shibboleth_path_rule.overview:
-  title: Protected path rules
+  title: Path rules
   parent: shibboleth.settings
   description: 'List of paths protected by Shibboleth authentication.'
   route_name: entity.shibboleth_path_rule.collection
+
+shibboleth_path.settings:
+  title: Path rules settings
+  description: Configure Shibboleth path rules.
+  parent: shibboleth.settings
+  route_name: shibboleth_path.settings
