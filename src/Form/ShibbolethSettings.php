@@ -146,23 +146,6 @@ class ShibbolethSettings extends ConfigFormBase {
       '#default_value' => $config->get('shibboleth_id_label'),
     ];
 
-    $form['path_rule_settings'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Path access rule settings'),
-      '#description' => $this->t('These settings will override any path access rules that apply to them.'),
-    ];
-    $form['path_rule_settings']['excluded_routes'] = [
-      '#type' => 'checkboxes',
-      '#title' => $this->t('Exclude the following routes from Shibboleth protection'),
-      '#description' => $this->t('These settings will override any path access rules that apply to them. They will not override Drupal permissions.<br>* Excluding the <strong>core user login</strong> route is recommended if enabling the "Whole site" path rule.'),
-      '#options' => [
-        'user-login' => t('Core user login (recommended*)'),
-        'user-password' => t('Core user password reset'),
-        'user-register' => t('Core user registration'),
-      ],
-      '#default_value' => $config->get('excluded_routes') ? $config->get('excluded_routes') : ['user-login'],
-    ];
-
     $form['debug_settings'] = [
       '#type' => 'details',
       '#title' => $this->t('Debugging settings'),
@@ -208,7 +191,6 @@ class ShibbolethSettings extends ConfigFormBase {
       ->set('login_link_text', $form_state->getValue('login_link_text'))
       ->set('logout_link_text', $form_state->getValue('logout_link_text'))
       ->set('shibboleth_id_label', $form_state->getValue('shibboleth_id_label'))
-      ->set('excluded_routes', $form_state->getValue('excluded_routes'))
       ->set('enable_debug_mode', $form_state->getValue('enable_debug_mode'))
       ->set('debug_path_prefix', $form_state->getValue('debug_path_prefix'))
       ->save();
