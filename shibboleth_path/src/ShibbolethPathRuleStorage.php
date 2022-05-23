@@ -11,14 +11,15 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Path\PathMatcherInterface;
-use Drupal\Core\Routing\RouteMatch;
-use Drupal\Core\Routing\RouteMatchInterface;
+// use Drupal\Core\Routing\RouteMatch;
+// use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Routing\RouteProviderInterface;
-use Drupal\Core\Url;
+// use Drupal\Core\Url;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\shibboleth_path\Entity\ShibbolethPathRule;
+// use Drupal\shibboleth_path\Entity\ShibbolethPathRule;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\Routing\Router;
+// use Symfony\Component\Routing\Router;
+// use Symfony\Component\Routing\Route;
 
 class ShibbolethPathRuleStorage extends ConfigEntityStorage implements ShibbolethPathRuleStorageInterface {
 
@@ -46,7 +47,7 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
   private $pageCache;
 
   /**
-   * @var Symfony\Component\Routing\Route[]
+   * @var \Symfony\Component\Routing\Route[]
    */
   private $excluded_routes;
 
@@ -58,7 +59,7 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
   /**
    * @var \Symfony\Component\Routing\Router
    */
-  private $router;
+  // private $router;
 
   /**
    * @var \Drupal\Core\Routing\RouteProviderInterface
@@ -118,55 +119,56 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
    * @return \Drupal\shibboleth_path\Entity\ShibbolethPathRule[]
    *   Returns an array of the best (most granular) match(es) for the given path.
    */
-  public function getBestMatchesForPath(string $path, $include_disabled = FALSE) {
-    // Never check access for these routes
-    // @todo Make these always accessible paths a config value.
-    // $always_accessible_routes = [
-    //   'user.logout',
-    //   'shibboleth.drupal_logout',
-    // ];
-    // foreach ($always_accessible_routes as $always_accessible_route) {
-    //   $always_accessible_path = Url::fromRoute($always_accessible_route)->toString();
-    //   if ($this->pathMatcher->matchPath($path, $always_accessible_path)) {
-    //     return [];
-    //   }
-    // }
-
-    // Get all the ShibPaths to check for matches
-    $shib_paths = $include_disabled ? parent::loadMultiple() : parent::loadByProperties(['status' => 1]);
-    // Remove the 'all' path rule. We can deal with that elsewhere.
-    // unset($shib_paths['all']);
-    // Select only the most granular match(es).
-    // @see Drupal\shibboleth\Access\ShibPathAccessChecker for handling multiple
-    // best matches.
-    $best_matches = [];
-    $current_granularity = 0;
-    foreach ($shib_paths as $shib_path) {
-      $shib_path_path = $shib_path->get('pattern');
-      // Check if the path matches this ShibPath's path.
-      if ($this->pathMatcher->matchPath($path, $shib_path_path)) {
-        // Compare the granularity of this ShibPath path to the current max
-        // granularity. If equal, add the ShibPath path to the $best_matches array.
-        $segment_count = count(explode('/', $shib_path_path));
-        if ($segment_count >= $current_granularity) {
-          // If we've reached a new max granularity, empty the $best_matches array.
-          if ($segment_count > $current_granularity) {
-            $current_granularity = $segment_count;
-            // Reset $best_matches to get rid of the less granular.
-            $best_matches = [];
-          }
-          // Add the full ShibPath object to the best_matches array.
-          $best_matches[] = $shib_path;
-        }
-      }
-    }
-    return $best_matches;
-  }
+  // public function getBestMatchesForPath(string $path, $include_disabled = FALSE) {
+  //   // Never check access for these routes
+  //   // @todo Make these always accessible paths a config value.
+  //   // $always_accessible_routes = [
+  //   //   'user.logout',
+  //   //   'shibboleth.drupal_logout',
+  //   // ];
+  //   // foreach ($always_accessible_routes as $always_accessible_route) {
+  //   //   $always_accessible_path = Url::fromRoute($always_accessible_route)->toString();
+  //   //   if ($this->pathMatcher->matchPath($path, $always_accessible_path)) {
+  //   //     return [];
+  //   //   }
+  //   // }
+  //
+  //   // Get all the ShibPaths to check for matches
+  //   $shib_paths = $include_disabled ? parent::loadMultiple() : parent::loadByProperties(['status' => 1]);
+  //   // Remove the 'all' path rule. We can deal with that elsewhere.
+  //   // unset($shib_paths['all']);
+  //   // Select only the most granular match(es).
+  //   // @see Drupal\shibboleth\Access\ShibPathAccessChecker for handling multiple
+  //   // best matches.
+  //   $best_matches = [];
+  //   $current_granularity = 0;
+  //   foreach ($shib_paths as $shib_path) {
+  //     $shib_path_path = $shib_path->get('pattern');
+  //     // Check if the path matches this ShibPath's path.
+  //     if ($this->pathMatcher->matchPath($path, $shib_path_path)) {
+  //       // Compare the granularity of this ShibPath path to the current max
+  //       // granularity. If equal, add the ShibPath path to the $best_matches array.
+  //       $segment_count = count(explode('/', $shib_path_path));
+  //       if ($segment_count >= $current_granularity) {
+  //         // If we've reached a new max granularity, empty the $best_matches array.
+  //         if ($segment_count > $current_granularity) {
+  //           $current_granularity = $segment_count;
+  //           // Reset $best_matches to get rid of the less granular.
+  //           $best_matches = [];
+  //         }
+  //         // Add the full ShibPath object to the best_matches array.
+  //         $best_matches[] = $shib_path;
+  //       }
+  //     }
+  //   }
+  //   return $best_matches;
+  // }
 
   /**
    * Gets the ShibbolethPathRules that match the given path.
    *
-   * @param string $path path to check.
+   * @param string $path
+   *   The path to check.
    * @param bool   $best_matches
    *   Whether to include all matches or just the "best" aka  most granular matches.
    * @param bool   $include_disabled
@@ -230,10 +232,20 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
     return $matches;
   }
 
+  /**
+   * Checks if the path is excluded from protection.
+   *
+   * Excluded paths will not be checked for matching path rules.
+   *
+   * @param string $path
+   *   The path to check.
+   *
+   * @return bool
+   *   Returns TRUE if the path is excluded, FALSE otherwise.
+   */
   public function isExcluded(string $path) {
     $excluded_paths = $this->getExcludedPaths();
     foreach ($excluded_paths as $excluded_path) {
-      // $excluded_path = Url::fromRoute($excluded_path)->toString();
       if ($this->pathMatcher->matchPath($path, $excluded_path)) {
         return TRUE;
       }
@@ -241,6 +253,15 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
     return FALSE;
   }
 
+  /**
+   * Gets the excluded paths from the excluded routes.
+   *
+   * @see getExcludedRoutes()
+   *
+   * @return string[]
+   *   Returns an array of paths. Returns an empty array if no excluded routes
+   *   are set.
+   */
   public function getExcludedPaths() {
     if (empty($this->excluded_paths)) {
       $this->setExcludedRoutes();
@@ -248,6 +269,15 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
     return $this->excluded_paths;
   }
 
+  /**
+   * Gets the excluded routes.
+   *
+   * Excluded routes are set in the shibboleth_path.settings config. Path
+   * protection isn't assessed for these routes.
+   *
+   * @return \Symfony\Component\Routing\Route[]
+   *   Returns an array of Route objects.
+   */
   public function getExcludedRoutes() {
     if (empty($this->excluded_routes)) {
       $this->setExcludedRoutes();
@@ -255,6 +285,9 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
     return $this->excluded_routes;
   }
 
+  /**
+   * Sets the value of $this->excluded_routes and $this->excluded_paths.
+   */
   private function setExcludedRoutes() {
     $config = $this->configFactory->get('shibboleth_path.settings');
     $excluded_route_names = $config->get('excluded_routes');
