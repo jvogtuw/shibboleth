@@ -3,8 +3,3 @@ shibboleth.settings:
   title: Settings
   base_route: shibboleth.settings
 
-#shibboleth.paths:
-#  route_name: entity.shib_path.collection
-#  title: Protected paths
-#  base_route: shibboleth.settings
-#  weight: 2

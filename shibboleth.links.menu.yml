@@ -4,9 +4,3 @@ shibboleth.settings:
   parent: user.admin_index
   route_name: shibboleth.settings
   weight: 10
-
-#entity.shib_path.overview:
-#  title: Protected paths
-#  parent: shibboleth.settings
-#  description: 'List of paths protected by Shibboleth authentication.'
-#  route_name: entity.shib_path.collection

@@ -1,5 +1,0 @@
-#entity.shib_path.add_form:
-#  route_name: 'entity.shib_path.add_form'
-#  title: 'Add protected path'
-#  appears_on:
-#    - entity.shib_path.collection
