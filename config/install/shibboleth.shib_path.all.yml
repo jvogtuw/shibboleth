@@ -1,5 +1,0 @@
-id: all
-label: "Whole site"
-path: "/*"
-status: false
-locked: true

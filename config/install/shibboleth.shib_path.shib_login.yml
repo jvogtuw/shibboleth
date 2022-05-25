@@ -1,5 +1,0 @@
-id: shib_login
-label: "Shibboleth login"
-path: "/shibboleth/login"
-status: true
-locked: true
