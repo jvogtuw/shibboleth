@@ -16,13 +16,13 @@ services:
     tags:
       - { name: access_check, applies_to: _shibboleth_path_access }
 
-  shibboleth.path_access:
-    class: Drupal\shibboleth_path\ShibbolethPathAccess
-    arguments: [ '@messenger', '@entity_type.manager', '@session', '@config.factory', '@path_alias.manager', '@shibboleth.auth_manager' ]
+#  shibboleth.path_access:
+#    class: Drupal\shibboleth_path\ShibbolethPathAccess
+#    arguments: [ '@messenger', '@entity_type.manager', '@session', '@config.factory', '@path_alias.manager', '@shibboleth.auth_manager' ]
 
-  shibboleth.path_access_handler:
-    class: Drupal\shibboleth_path\ShibbolethPathAccessHandler
-    arguments: [ '@shibboleth.auth_manager', '@cache.shibboleth', '@entity_type.manager' ]
+#  shibboleth.path_access_handler:
+#    class: Drupal\shibboleth_path\ShibbolethPathAccessHandler
+#    arguments: [ '@shibboleth.auth_manager', '@cache.shibboleth', '@entity_type.manager' ]
 
   logger.channel.shibboleth_path:
     parent: logger.channel_base
