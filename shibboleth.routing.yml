@@ -14,14 +14,14 @@ shibboleth.settings:
   requirements:
     _permission: 'administer shibboleth'
 
-shibboleth.login_landing:
-  path: '/shibboleth'
-  defaults:
-    _controller: '\Drupal\shibboleth\Controller\LoginController::loginLanding'
-  requirements:
-    _permission: 'access content'
-  options:
-    no_cache: 'TRUE'
+#shibboleth.login_landing:
+#  path: '/shibboleth'
+#  defaults:
+#    _controller: '\Drupal\shibboleth\Controller\LoginController::loginLanding'
+#  requirements:
+#    _permission: 'access content'
+#  options:
+#    no_cache: 'TRUE'
 
 shibboleth.drupal_login:
   path: '/shibboleth/login'
@@ -30,7 +30,6 @@ shibboleth.drupal_login:
     _title: 'Login'
   requirements:
     _permission: 'access content'
-#    _custom_access: '\Drupal\shibboleth\Controller\LoginController::loginAccess'
   options:
     no_cache: 'TRUE'
 
@@ -44,15 +43,15 @@ shibboleth.drupal_login:
 #  options:
 #    no_cache: 'TRUE'
 
-shibboleth.authenticate:
-  path: '/shibboleth/authenticate'
-  defaults:
-    _controller: '\Drupal\shibboleth\Controller\LoginController::shibAuthenticate'
-    _title: 'Shibboleth authentication only'
-  requirements:
-    _permission: 'access content'
-  options:
-    no_cache: 'TRUE'
+#shibboleth.authenticate:
+#  path: '/shibboleth/authenticate'
+#  defaults:
+#    _controller: '\Drupal\shibboleth\Controller\LoginController::shibAuthenticate'
+#    _title: 'Shibboleth authentication only'
+#  requirements:
+#    _permission: 'access content'
+#  options:
+#    no_cache: 'TRUE'
 
 shibboleth.shib_destroy:
   path: '/shibboleth/destroy'

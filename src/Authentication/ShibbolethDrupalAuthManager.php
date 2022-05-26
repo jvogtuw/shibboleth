@@ -15,6 +15,7 @@ use Drupal\Core\Session\SessionManagerInterface;
 use Drupal\Core\Url;
 use Drupal\shibboleth\Exception\ShibbolethAutoRegisterException;
 use Drupal\user\Entity\User;
+use Drupal\user\UserInterface;
 use mysql_xdevapi\Exception;
 
 // use Psr\Log\LoggerInterface;
@@ -363,6 +364,15 @@ class ShibbolethDrupalAuthManager {
     return empty($linked_user) ? FALSE : User::load($linked_user->id());
   }
 
+  public function getShibbolethUsername($user_id) {
+    /** @var UserInterface $account */
+    $account = $this->userStorage->load($user_id);
+    return $account->get('shibboleth_username')->getValue()[0]['value'];
+  }
+
+  /**
+   * @todo Remove
+   */
   public function checkPotentialUserMatch() {
     $user_match = user_load_by_name($this->getTargetedId());
     $this->potential_user_match = $user_match ?? FALSE;
@@ -370,6 +380,9 @@ class ShibbolethDrupalAuthManager {
     return $this->potential_user_match;
   }
 
+  /**
+   * @todo Remove
+   */
   public function getPotentialUserMatch() {
     if (is_null($this->potential_user_match)) {
       $this->checkPotentialUserMatch();

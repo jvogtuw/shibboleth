@@ -1,12 +1,12 @@
-shibboleth.authenticate:
-  path: '/shibboleth/authenticate'
-  defaults:
-    _controller: '\Drupal\shibboleth\Controller\LoginController::shibAuthenticate'
-    _title: 'Shibboleth authentication only'
-  requirements:
-    _permission: 'access content'
-  options:
-    no_cache: 'TRUE'
+#shibboleth.authenticate:
+#  path: '/shibboleth/authenticate'
+#  defaults:
+#    _controller: '\Drupal\shibboleth\Controller\LoginController::shibAuthenticate'
+#    _title: 'Shibboleth authentication only'
+#  requirements:
+#    _permission: 'access content'
+#  options:
+#    no_cache: 'TRUE'
 
 shibboleth_path.settings:
   path: '/admin/config/people/shibboleth/path-rules-settings'
