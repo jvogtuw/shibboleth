@@ -1,6 +1,6 @@
 name: Shibboleth
 type: module
 description: Shibboleth authentication
-package: Custom
+package: Authentication
 core: 8.x
 core_version_requirement: ^8 || ^9
