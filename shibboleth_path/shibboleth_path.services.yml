@@ -12,7 +12,7 @@ services:
 
   shibboleth_path.access_check.route:
     class: Drupal\shibboleth_path\Access\ShibbolethPathAccessCheck
-    arguments: [ '@request_stack', '@shibboleth.auth_manager', '@cache.shibboleth', '@entity_type.manager', '@path_alias.manager', '@page_cache_kill_switch' ]
+    arguments: [ '@request_stack', '@shibboleth.auth_manager', '@cache.shibboleth', '@entity_type.manager', '@path_alias.manager', '@page_cache_kill_switch', '@config.factory', '@messenger', '@logger.channel.shibboleth' ]
     tags:
       - { name: access_check, applies_to: _shibboleth_path_access }
 

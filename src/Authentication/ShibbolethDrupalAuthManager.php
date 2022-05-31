@@ -17,6 +17,7 @@ use Drupal\shibboleth\Exception\ShibbolethAutoRegisterException;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
 use mysql_xdevapi\Exception;
+use Psr\Log\LoggerInterface;
 
 // use Psr\Log\LoggerInterface;
 
@@ -43,7 +44,9 @@ class ShibbolethDrupalAuthManager {
   protected $shibAuth;
 
   /**
-   * @var \Drupal\Core\Logger\LoggerChannelInterface
+   * \Drupal\Core\Logger\LoggerChannelInterface
+   *
+   * @var \Psr\Log\LoggerInterface
    */
   protected $logger;
 
@@ -79,8 +82,8 @@ class ShibbolethDrupalAuthManager {
    * LoginHandler constructor.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface              $config_factory
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface          $etm
-   * @param \Drupal\Core\Logger\LoggerChannelInterface              $logger
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface          $entity_type_manager
+   * @param \Psr\Log\LoggerInterface                                $logger
    * @param \Drupal\shibboleth\Authentication\ShibbolethAuthManager $shib_auth_manager
    * @param \Drupal\Core\Session\SessionManagerInterface            $session_manager
    * @param \Drupal\Core\Session\AccountInterface                   $current_user
@@ -89,7 +92,7 @@ class ShibbolethDrupalAuthManager {
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function __construct(ConfigFactoryInterface $config_factory, EntityTypeManagerInterface $entity_type_manager, LoggerChannelInterface $logger, ShibbolethAuthManager $shib_auth_manager, SessionManagerInterface $session_manager, AccountInterface $current_user, MessengerInterface $messenger) {
+  public function __construct(ConfigFactoryInterface $config_factory, EntityTypeManagerInterface $entity_type_manager, LoggerInterface $logger, ShibbolethAuthManager $shib_auth_manager, SessionManagerInterface $session_manager, AccountInterface $current_user, MessengerInterface $messenger) {
     // $this->db = $db;
     $this->config = $config_factory->get('shibboleth.settings');
     $this->userStorage = $entity_type_manager->getStorage('user');
@@ -173,19 +176,17 @@ class ShibbolethDrupalAuthManager {
     }
 
     // There's already a logged in Drupal user
-    if ($this->currentUser->isAuthenticated()) {
-      // The Shibboleth user doesn't match the Drupal user and the Drupal user
-      // doesn't have permission to bypass that conflict. Log out.
-      if ($this->currentUser->getAccountName() !== $authname && !$this->currentUser->hasPermission('bypass shibboleth login')) {
-
-      }
-    }
-
-    // Login access is blocked due to the user's attributes.
-    // @see ShibPath
+    // if ($this->currentUser->isAuthenticated()) {
+    //   // The Shibboleth user doesn't match the Drupal user and the Drupal user
+    //   // doesn't have permission to bypass that conflict. Log out.
+    //   if ($this->currentUser->getAccountName() !== $authname && !$this->currentUser->hasPermission('bypass shibboleth login')) {
+    //
+    //   }
+    // }
 
     // Log in the Drupal user.
     user_login_finalize($linked_user);
+    $this->logger->notice('Shibboleth user %authname logged in.', ['%authname' => $authname]);
     return $linked_user;
 
 
@@ -364,10 +365,18 @@ class ShibbolethDrupalAuthManager {
     return empty($linked_user) ? FALSE : User::load($linked_user->id());
   }
 
-  public function getShibbolethUsername($user_id) {
+  /**
+   * Gets the Shibboleth ID mapped to a user.
+   *
+   * @param string $user_id
+   *
+   * @return string
+   */
+  public function getShibbolethUsername(string $user_id) {
     /** @var UserInterface $account */
     $account = $this->userStorage->load($user_id);
-    return $account->get('shibboleth_username')->getValue()[0]['value'];
+    // @todo Is there a better way to get the property value?
+    return isset($account->get('shibboleth_username')->getValue()[0]) ? $account->get('shibboleth_username')->getValue()[0]['value'] : '';
   }
 
   /**

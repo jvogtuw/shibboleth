@@ -5,8 +5,10 @@ namespace Drupal\shibboleth_path\Access;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultAllowed;
 use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-// use Drupal\Core\Messenger\MessengerInterface;
+use Psr\Log\LoggerInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
 use Drupal\Core\Routing\Access\AccessInterface;
 use Drupal\Core\Routing\AccessAwareRouterInterface;
@@ -55,6 +57,21 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    */
   private $killSwitch;
 
+  /**
+   * @var \Drupal\Core\Config\ImmutableConfig
+   */
+  private $config;
+
+  /**
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  private $messenger;
+
+  /**
+   * @var \Psr\Log\LoggerInterface
+   */
+  protected $logger;
+
 
   /**
    * @param \Symfony\Component\HttpFoundation\RequestStack          $request_stack
@@ -63,11 +80,14 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface          $entity_type_manager
    * @param \Drupal\path_alias\AliasManagerInterface                $alias_manager
    * @param \Drupal\Core\PageCache\ResponsePolicy\KillSwitch        $kill_switch
+   * @param \Drupal\Core\Config\ConfigFactoryInterface              $config_factory
+   * @param \Drupal\Core\Messenger\MessengerInterface               $messenger
+   * @param \Psr\Log\LoggerInterface                                $logger
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function __construct(RequestStack $request_stack, ShibbolethAuthManager $shibboleth_auth_manager, CacheBackendInterface $shibboleth_cache, EntityTypeManagerInterface $entity_type_manager, AliasManagerInterface $alias_manager, KillSwitch $kill_switch) {
+  public function __construct(RequestStack $request_stack, ShibbolethAuthManager $shibboleth_auth_manager, CacheBackendInterface $shibboleth_cache, EntityTypeManagerInterface $entity_type_manager, AliasManagerInterface $alias_manager, KillSwitch $kill_switch, ConfigFactoryInterface $config_factory, MessengerInterface $messenger, LoggerInterface $logger) {
 
     $this->requestStack = $request_stack;
     $this->shibbolethAuthManager = $shibboleth_auth_manager;
@@ -75,6 +95,9 @@ class ShibbolethPathAccessCheck implements AccessInterface {
     $this->pathRuleStorage = $entity_type_manager->getStorage('shibboleth_path_rule');
     $this->aliasManager = $alias_manager;
     $this->killSwitch = $kill_switch;
+    $this->config = $config_factory->get('shibboleth.settings');
+    $this->messenger = $messenger;
+    $this->logger = $logger;
   }
 
   /**
@@ -104,6 +127,10 @@ class ShibbolethPathAccessCheck implements AccessInterface {
       if ($this->checkAccess()) {
         return AccessResult::allowed();
       } else {
+        $id_label = $this->config->get('shibboleth_id_label');
+        $authname = $this->shibbolethAuthManager->getTargetedId();
+        $this->messenger->addError(t('The @id_label <strong>%authname</strong> does not have access to this page. Please contact the site administrator to request access.', ['@id_label' => $id_label, '%authname' => $authname]));
+        $this->logger->warning('A Shibboleth path rule prevented the @id_label %authname from accessing this path.', ['@id_label' => $id_label, '%authname' => $authname]);
         return AccessResult::forbidden();
       }
 
@@ -115,6 +142,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
         $this->requestStack->getCurrentRequest()->attributes->set('shibboleth_auth_required', TRUE);
         return AccessResult::forbidden();
       }
+
     }
     return AccessResult::allowed();
   }

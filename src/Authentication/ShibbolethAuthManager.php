@@ -6,7 +6,7 @@ namespace Drupal\shibboleth\Authentication;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Logger\LoggerChannelInterface;
-// use Psr\Log\LoggerChannelInterface;
+use Psr\Log\LoggerInterface;
 use Drupal\Core\Routing\RouteMatch;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\shibboleth\Authentication\ShibbolethSession;
@@ -77,14 +77,15 @@ class ShibbolethAuthManager {
   /**
    * Constructor for ShibbolethAuthManager.
    *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface          $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface        $config_factory
    *   The configuration factory.
-   * @param \Drupal\Core\Logger\LoggerChannelInterface          $logger
-   * @param \Symfony\Component\HttpFoundation\RequestStack      $request_stack
-   * @param \Drupal\Core\Session\AccountInterface               $current_user
-   * @param \Drupal\Core\Messenger\MessengerInterface           $messenger
+   * @param \Psr\Log\LoggerInterface                          $logger
+   * @param \Symfony\Component\HttpFoundation\RequestStack    $request_stack
+   * @param \Drupal\Core\Session\AccountInterface             $current_user
+   * @param \Drupal\Core\Messenger\MessengerInterface         $messenger
+   * @param \Drupal\Core\Routing\RouteMatchInterface          $current_route_match
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelInterface $logger, RequestStack $request_stack, AccountInterface $current_user, MessengerInterface $messenger, RouteMatchInterface $current_route_match) {
+  public function __construct(ConfigFactoryInterface $config_factory, LoggerInterface $logger, RequestStack $request_stack, AccountInterface $current_user, MessengerInterface $messenger, RouteMatchInterface $current_route_match) {
     $this->config = $config_factory->get('shibboleth.settings');
     $this->logger = $logger;
     $this->requestStack = $request_stack;
@@ -243,7 +244,7 @@ class ShibbolethAuthManager {
       // happens upon failure to login to Drupal with a Shibboleth user.
       // If so, set the destination to the original destination or the front page.
       if ($this->currentRouteMatch->getRouteName() == 'shibboleth.drupal_login') {
-        $destination = $this->requestStack->getCurrentRequest()->query->get('destination') ?? '<front>';
+        $destination = $this->requestStack->getCurrentRequest()->query->get('destination') ?? $this->requestStack->getCurrentRequest()->getBasePath();
       }
       else {
         // Otherwise, use the current path as the destination.
