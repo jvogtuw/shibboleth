@@ -60,7 +60,7 @@ class ShibbolethDrupalAuthManager {
    */
   protected $currentUser;
 
-  protected $potentialUserMatch;
+  // protected $potentialUserMatch;
 
   /**
    * @var string
@@ -71,11 +71,6 @@ class ShibbolethDrupalAuthManager {
    * @var \Drupal\Core\Messenger\MessengerInterface
    */
   protected $messenger;
-
-  /**
-   * MySQL error code for duplicate entry.
-   */
-  // const MYSQL_ER_DUP_KEY = 23000;
 
 
   /**
@@ -112,18 +107,21 @@ class ShibbolethDrupalAuthManager {
     }
   }
 
-  // public function getShibAuthManager() {
-  //   return $this->shib_auth_manager;
+  // public function getLoginUrl() {
+  //
+  // }
+  //
+  // public function getLogoutUrl() {
+  //   return $this->shibAuth->getLoginUrl();
   // }
 
-  public function getLoginUrl() {
-
-  }
-
-  public function getLogoutUrl() {
-    return $this->shibAuth->getLoginUrl();
-  }
-
+  /**
+   * Attempts to log in or register a new user associated with the active
+   * Shibboleth session.
+   *
+   * @return bool|\Drupal\user\UserInterface
+   * @throws \Exception
+   */
   public function loginRegister() {
 
     // No Shibboleth session
@@ -135,7 +133,6 @@ class ShibbolethDrupalAuthManager {
     // Attempt to log in the user.
     $account = $this->login();
     if ($account) {
-      // $this->logger->status('It thinks $account is true.');
       return $account;
     }
     elseif ($this->config->get('auto_register_user')) {
@@ -148,7 +145,13 @@ class ShibbolethDrupalAuthManager {
   /**
    * Attempts to log in a Drupal user with a Shibboleth session.
    *
-   * @return \Symfony\Component\HttpFoundation\RedirectResponse|false
+   * Looks for a Drupal user with its Shibboleth username field matching the
+   * target ID (username) of the active Shibboleth session. If a matching user
+   * is found, it attempts to complete Drupal authentication for that user.
+   *
+   * @return bool
+   *   Returns TRUE if a matching user was found and successfully logged into
+   *   Drupal, FALSE otherwise.
    */
   public function login() {
     $authname = $this->shibAuth->getTargetedId();
@@ -175,97 +178,11 @@ class ShibbolethDrupalAuthManager {
       return FALSE;
     }
 
-    // There's already a logged in Drupal user
-    // if ($this->currentUser->isAuthenticated()) {
-    //   // The Shibboleth user doesn't match the Drupal user and the Drupal user
-    //   // doesn't have permission to bypass that conflict. Log out.
-    //   if ($this->currentUser->getAccountName() !== $authname && !$this->currentUser->hasPermission('bypass shibboleth login')) {
-    //
-    //   }
-    // }
-
     // Log in the Drupal user.
     user_login_finalize($linked_user);
     $this->logger->notice('Shibboleth user %authname logged in.', ['%authname' => $authname]);
     return $linked_user;
 
-
-    // $error_message = '';
-    // try {
-    //   // $this->setErrorMessage('you shall not pass');
-    //   // throw new \Exception('test exception');
-    //   $user_registered = FALSE;
-    //   // Register new user if user does not exist.
-    //   if (!$this->checkProvisionedUser()) {
-    //
-    //     // Check if there's a likely match with an existing Drupal user.
-    //     if ($this->checkPotentialUserMatch()) {
-    //       //@todo return the route instead of an error message.
-    //
-    //       // Set the redirect to the Account map request form.
-    //       // $redirect = Url::fromRoute('shib_auth.account_map_request');
-    //       // echo $redirect;
-    //       $error_msg = t('Login unsuccessful. See below for more information.');
-    //       $this->setErrorMessage($error_msg);
-    //       // return 11000;
-    //       throw new \Exception('Shibboleth user is not mapped to a Drupal user, however, there is a potential matching account.', 11000);
-    //       // $this->messenger->addWarning($error_msg);
-    //       // $error_url = Url::fromRoute('shibboleth.drupal_login_error');
-    //       // return $error_url->toString();
-    //       // return new RedirectResponse($error_url->toString());
-    //     }
-    //     else {
-    //       // echo 'trying to create user';
-    //       $user_registered = $this->registerNewUser();
-    //     }
-    //   }
-    //   else {
-    //     $user_registered = TRUE;
-    //   }
-    //
-    //   if ($user_registered) {
-    //     $this->authenticateUser();
-    //     return FALSE;
-    //   }
-    // }
-    // catch (\Exception $e) {
-    //   // Log the error to Drupal log messages.
-    //   $this->logger->error($e);
-    //
-    //   // Shibboleth user not mapped to a Drupal user, but a potential match
-    //   // exists.
-    //   if ($e->getCode() == 11000) {
-    //     // $this->setErrorMessage(t('There was an error logging you in and we were unable to create a user for you.'));
-    //     $this->messenger->addError($this->getErrorMessage());
-    //     return $e->getCode();
-    //   }
-    //   else {
-    //     // $user = \Drupal::currentUser();
-    //     // if ($user->isAuthenticated()) {
-    //     // if ($this->current_user->isAuthenticated()) {
-    //     //   // Kill the Drupal session.
-    //     //   // @todo - Do we need to kill the session for anonymous users, too? If so, how do we set the error message?
-    //     //   user_logout();
-    //     // }
-    //
-    //     if ($this->getErrorMessage()) {
-    //       $this->messenger->addError($this->getErrorMessage());
-    //     }
-    //
-    //     $return_url = '';
-    //     // if ($this->config->get('url_redirect_logout')) {
-    //     //   $return_url = '?return=' . $this->config->get('url_redirect_logout');
-    //     // }
-    //     // Redirect to shib logout url.
-    //     // @todo do we really want this?
-    //     // return new TrustedRedirectResponse($this->config->get('shibboleth_logout_handler_url') . $return_url);
-    //     // return new TrustedRedirectResponse($this->shib_auth_manager->getLogoutUrl() . $return_url);
-    //     // return Url::fromRoute('shibboleth.drupal_login_error')->toString();
-    //     // $error_url = Url::fromRoute('shibboleth.drupal_login_error', ['error_message']);
-    //     // return $error_url->toString();
-    //   }
-    // }
-    // return FALSE;
   }
 
   /**
@@ -274,8 +191,6 @@ class ShibbolethDrupalAuthManager {
    * The newly created user will be logged in.
    *
    * @return \Drupal\user\UserInterface
-   *
-   * @throws \ShibbolethAutoRegisterException
    */
   private function registerUser() {
     $user_data = [
@@ -324,44 +239,37 @@ class ShibbolethDrupalAuthManager {
   }
 
   /**
-   * Check shib_authmap table for user, return true if user found.
+   * Checks the values of users' Shibboleth username fields for a match.
    *
    * @return bool
-   *
-   * @throws \Exception
+   *   Returns TRUE if a user was found, FALSE otherwise.
    */
-  public function checkLinkedUser($authname) {
-    $linked_user_lookup = $this->userStorage
-      ->loadByProperties([
-        'shibboleth_username' => $this->shibAuth->getTargetedId(),
-      ]);
-    $linked_user = reset($linked_user_lookup);
-    // if (empty($shib_user)) {
-    //   return FALSE;
-    // }
-    // $this->linkedUser = User::load($shib_user->id());
-    // return $this->linkedUser;
-    return empty($linked_user) ? FALSE : User::load($linked_user->id());
-  }
+  // public function checkLinkedUser($authname) {
+  //   $linked_user_lookup = $this->userStorage
+  //     ->loadByProperties([
+  //       'shibboleth_username' => $this->shibAuth->getTargetedId(),
+  //     ]);
+  //   $linked_user = reset($linked_user_lookup);
+  //   return empty($linked_user) ? FALSE : User::load($linked_user->id());
+  // }
 
   /**
-   * Check shib_authmap table for user, return true if user found.
+   * Gets the Drupal user associated with the given Shibboleth authname.
    *
-   * @return bool
+   * Looks for the authname in the user.shibboleth_username field value.
    *
-   * @throws \Exception
+   * @param string $authname
+   *   The Shibboleth username.
+   *
+   * @return \Drupal\user\Entity\User|bool
+   *   Returns a User entity if a match was found, FALSE otherwise.
    */
-  public function getLinkedUser($authname) {
+  public function getLinkedUser(string $authname) {
     $linked_user_lookup = $this->userStorage
       ->loadByProperties([
         'shibboleth_username' => $this->shibAuth->getTargetedId(),
       ]);
     $linked_user = reset($linked_user_lookup);
-    // if (empty($shib_user)) {
-    //   return FALSE;
-    // }
-    // $this->linkedUser = User::load($shib_user->id());
-    // return $this->linkedUser;
     return empty($linked_user) ? FALSE : User::load($linked_user->id());
   }
 
@@ -409,17 +317,4 @@ class ShibbolethDrupalAuthManager {
     return $rand->string(30);
   }
 
-  /**
-   *
-   */
-  // private function setErrorMessage($message) {
-  //   $this->error_message = $message;
-  // }
-
-  /**
-   *
-   */
-  // public function getErrorMessage() {
-  //   return $this->error_message;
-  // }
 }

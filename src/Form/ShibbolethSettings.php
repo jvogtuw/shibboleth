@@ -97,7 +97,6 @@ class ShibbolethSettings extends ConfigFormBase {
     $form['session_settings']['destroy_session_on_logout'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Destroy Shibboleth session on Drupal logout'),
-      '#description' => $this->t('The user will be redirected to HTTPS'),
       '#default_value' => $config->get('destroy_session_on_logout'),
     ];
     $form['session_settings']['login_redirect'] = [
