@@ -221,7 +221,7 @@ class ShibbolethAuthManager {
    */
   private function setGroups() {
     $groups = self::fixModRewriteIssues($this->config->get('server_variable_groups')) ?? self::fixModRewriteIssues('isMemberOf');
-    
+
     $groups_arr = [];
     if (!empty($groups)) {
       $groups_arr = explode(';', $groups);
@@ -296,9 +296,7 @@ class ShibbolethAuthManager {
       }
       else {
         // Otherwise, use the current path as the destination.
-        // Grab the base path in case the site is a subsite.
-        $base_path = $this->requestStack->getCurrentRequest()->getBasePath();
-        $destination = $base_path . $this->requestStack->getCurrentRequest()->getPathInfo();
+        $destination = $this->requestStack->getCurrentRequest()->getRequestUri();
       }
 
     }
@@ -360,8 +358,9 @@ class ShibbolethAuthManager {
       // $target = '';
       // Otherwise, use the current path as the destination.
       // Grab the base path in case the site is a subsite.
-      $base_path = $this->requestStack->getCurrentRequest()->getBasePath();
-      $target = $base_path . $this->requestStack->getCurrentRequest()->getPathInfo();
+      // $base_path = $this->requestStack->getCurrentRequest()->getBasePath();
+      // $target = $base_path . $this->requestStack->getCurrentRequest()->getPathInfo();
+    $target = $this->requestStack->getCurrentRequest()->getUri();
     // }
 
     $target_options = [
@@ -419,8 +418,9 @@ class ShibbolethAuthManager {
 
         // Otherwise, use the current path as the destination.
         // Grab the base path in case the site is a subsite.
-        $base_path = $this->requestStack->getCurrentRequest()->getBasePath();
-        $destination = $base_path . $this->requestStack->getCurrentRequest()->getPathInfo();
+        // $base_path = $this->requestStack->getCurrentRequest()->getBasePath();
+        // $destination = $base_path . $this->requestStack->getCurrentRequest()->getPathInfo();
+        $destination = $this->requestStack->getCurrentRequest()->getRequestUri();
 
       }
 
