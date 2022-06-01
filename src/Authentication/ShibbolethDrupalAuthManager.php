@@ -289,22 +289,22 @@ class ShibbolethDrupalAuthManager {
   /**
    * @todo Remove
    */
-  public function checkPotentialUserMatch() {
-    $user_match = user_load_by_name($this->getTargetedId());
-    $this->potential_user_match = $user_match ?? FALSE;
-    // $this->potential_user_match = FALSE;
-    return $this->potential_user_match;
-  }
+  // public function checkPotentialUserMatch() {
+  //   $user_match = user_load_by_name($this->getTargetedId());
+  //   $this->potential_user_match = $user_match ?? FALSE;
+  //   // $this->potential_user_match = FALSE;
+  //   return $this->potential_user_match;
+  // }
 
   /**
    * @todo Remove
    */
-  public function getPotentialUserMatch() {
-    if (is_null($this->potential_user_match)) {
-      $this->checkPotentialUserMatch();
-    }
-    return $this->potential_user_match;
-  }
+  // public function getPotentialUserMatch() {
+  //   if (is_null($this->potential_user_match)) {
+  //     $this->checkPotentialUserMatch();
+  //   }
+  //   return $this->potential_user_match;
+  // }
 
   /**
    * Generate a random password for the Drupal user account.
