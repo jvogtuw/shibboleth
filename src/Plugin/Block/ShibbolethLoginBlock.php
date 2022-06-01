@@ -6,7 +6,6 @@ use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\Url;
 use Drupal\shibboleth\Authentication\ShibbolethAuthManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -24,16 +23,16 @@ class ShibbolethLoginBlock extends BlockBase implements ContainerFactoryPluginIn
   /**
    * @var \Drupal\shibboleth\Authentication\ShibbolethAuthManager
    */
-  protected $shib_auth_manager;
+  protected $shibbolethAuthManager;
 
   /**
    * @var \Drupal\Core\Session\AccountInterface
    */
   private $current_user;
 
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, ShibbolethAuthManager $shib_auth_manager, AccountInterface $current_user) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, ShibbolethAuthManager $shibboleth_auth_manager, AccountInterface $current_user) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->shib_auth_manager = $shib_auth_manager;
+    $this->shibbolethAuthManager = $shibboleth_auth_manager;
     $this->current_user = $current_user;
   }
 
@@ -56,12 +55,10 @@ class ShibbolethLoginBlock extends BlockBase implements ContainerFactoryPluginIn
 
     $markup = '<div class="shibboleth-block">';
     if ($this->current_user->isAnonymous()) {
-      $markup .= '<div class="shibboleth-login">' . $this->shib_auth_manager->getLoginLink() . '</div>';
+      $markup .= '<div class="shibboleth-login">' . $this->shibbolethAuthManager->getLoginLink() . '</div>';
     }
     else {
-      // $logout_route = Url::fromRoute('shibboleth.drupal_logout')->toString();
-      // $markup .= '<div class="shibboleth-logout">' . $logout_route . '</div>';
-      $markup .= '<div class="shibboleth-logout">' . $this->shib_auth_manager->getLogoutLink() . '</div>';
+      $markup .= '<div class="shibboleth-logout">' . $this->shibbolethAuthManager->getLogoutLink() . '</div>';
     }
     $markup .= '</div>';
 

@@ -1,8 +1,4 @@
 services:
-#  shibboleth.session:
-#    class: Drupal\shibboleth\Authentication\ShibbolethSession
-#    arguments: ['@config.factory']
-
   shibboleth.auth_manager:
     class: Drupal\shibboleth\Authentication\ShibbolethAuthManager
     arguments: [ '@config.factory', '@logger.channel.shibboleth', '@request_stack', '@current_user', '@messenger', '@current_route_match' ]
@@ -10,7 +6,6 @@ services:
   shibboleth.drupal_auth_manager:
     class: Drupal\shibboleth\Authentication\ShibbolethDrupalAuthManager
     arguments: [ '@config.factory', '@entity_type.manager', '@logger.channel.shibboleth', '@shibboleth.auth_manager', '@session_manager', '@current_user', '@messenger' ]
-
 
   logger.channel.shibboleth:
     parent: logger.channel_base
