@@ -3,3 +3,8 @@ shibboleth.settings:
   title: Settings
   base_route: shibboleth.settings
 
+shibboleth.variables:
+  route_name: shibboleth.variables
+  title: Variables
+  base_route: shibboleth.settings
+  weight: 10

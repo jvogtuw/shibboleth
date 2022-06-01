@@ -4,3 +4,10 @@ shibboleth.settings:
   parent: user.admin_index
   route_name: shibboleth.settings
   weight: 10
+
+shibboleth.variables:
+  title: Variables
+  description: View Shibboleth server variables.
+  parent: shibboleth.settings
+  route_name: shibboleth.variables
+  weight: 50

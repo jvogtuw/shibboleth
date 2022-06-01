@@ -73,3 +73,11 @@ shibboleth.drupal_logout:
     _permission: 'access content'
   options:
     no_cache: 'TRUE'
+
+shibboleth.variables:
+  path: '/admin/config/people/shibboleth/variables'
+  defaults:
+    _title: 'Shibboleth session variables'
+    _controller: '\Drupal\shibboleth\Controller\VariablesController::build'
+  requirements:
+    _permission: 'administer shibboleth'

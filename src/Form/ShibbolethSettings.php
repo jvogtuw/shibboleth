@@ -94,11 +94,11 @@ class ShibbolethSettings extends ConfigFormBase {
       '#description' => $this->t('Upon attempting to log in, if no linked user is found, attempt to create a new Drupal user. This is only triggered when a user targets the Shibboleth login route, not for accessing other protected paths. It overrides the Drupal setting for who can register users.'),
       '#default_value' => $config->get('auto_register_user'),
     ];
-    $form['session_settings']['destroy_session_on_logout'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Destroy Shibboleth session on Drupal logout'),
-      '#default_value' => $config->get('destroy_session_on_logout'),
-    ];
+    // $form['session_settings']['destroy_session_on_logout'] = [
+    //   '#type' => 'checkbox',
+    //   '#title' => $this->t('Destroy Shibboleth session on Drupal logout'),
+    //   '#default_value' => $config->get('destroy_session_on_logout'),
+    // ];
     $form['session_settings']['login_redirect'] = [
       '#type' => 'textfield',
       '#title' => $this->t('URL to redirect to after login'),
@@ -145,21 +145,21 @@ class ShibbolethSettings extends ConfigFormBase {
       '#default_value' => $config->get('shibboleth_id_label'),
     ];
 
-    $form['debug_settings'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Debugging settings'),
-    ];
-    $form['debug_settings']['enable_debug_mode'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Enable DEBUG mode.'),
-      '#default_value' => $config->get('enable_debug_mode'),
-    ];
-    $form['debug_settings']['debug_path_prefix'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('DEBUG path prefix'),
-      '#description' => $this->t("For example, use \"/user/\" to display DEBUG messages on paths like \"/user/*\"."),
-      '#default_value' => $config->get('debug_path_prefix'),
-    ];
+    // $form['debug_settings'] = [
+    //   '#type' => 'details',
+    //   '#title' => $this->t('Debugging settings'),
+    // ];
+    // $form['debug_settings']['enable_debug_mode'] = [
+    //   '#type' => 'checkbox',
+    //   '#title' => $this->t('Enable DEBUG mode.'),
+    //   '#default_value' => $config->get('enable_debug_mode'),
+    // ];
+    // $form['debug_settings']['debug_path_prefix'] = [
+    //   '#type' => 'textfield',
+    //   '#title' => $this->t('DEBUG path prefix'),
+    //   '#description' => $this->t("For example, use \"/user/\" to display DEBUG messages on paths like \"/user/*\"."),
+    //   '#default_value' => $config->get('debug_path_prefix'),
+    // ];
 
     return parent::buildForm($form, $form_state);
   }
@@ -184,14 +184,14 @@ class ShibbolethSettings extends ConfigFormBase {
       ->set('server_variable_groups', $form_state->getValue('server_variable_groups'))
       ->set('force_https_on_login', $form_state->getValue('force_https_on_login'))
       ->set('auto_register_user', $form_state->getValue('auto_register_user'))
-      ->set('destroy_session_on_logout', $form_state->getValue('destroy_session_on_logout'))
+      // ->set('destroy_session_on_logout', $form_state->getValue('destroy_session_on_logout'))
       ->set('login_redirect', $form_state->getValue('login_redirect'))
       ->set('logout_redirect', $form_state->getValue('logout_redirect'))
       ->set('login_link_text', $form_state->getValue('login_link_text'))
       ->set('logout_link_text', $form_state->getValue('logout_link_text'))
       ->set('shibboleth_id_label', $form_state->getValue('shibboleth_id_label'))
-      ->set('enable_debug_mode', $form_state->getValue('enable_debug_mode'))
-      ->set('debug_path_prefix', $form_state->getValue('debug_path_prefix'))
+      // ->set('enable_debug_mode', $form_state->getValue('enable_debug_mode'))
+      // ->set('debug_path_prefix', $form_state->getValue('debug_path_prefix'))
       ->save();
 
     parent::submitForm($form, $form_state);
