@@ -95,35 +95,83 @@ class LogoutController extends ControllerBase {
    * session as well.
    */
   public function logout() {
-    // return [
-    //   '#markup' => 'wtf'
-    // ];
-    $destination = $this->requestStack->getCurrentRequest()->query->get('destination') ?? $this->requestStack->getCurrentRequest()->getBasePath();
-    $this->requestStack->getCurrentRequest()->query->remove('destination');
-    // return [
-    //   '#markup' => 'wtf'
-    // ];
-    if ($this->shibAuth->sessionExists()) {
-      $this->messenger()->addStatus($this->t('Yes Shib session.'));
-      return [
-        '#markup' => 'wtf'
-      ];
-      // A Shibboleth session exists, so redirect to the Shibboleth logout URL.
-      // return new TrustedRedirectResponse($this->shibAuth->getLogoutUrl()->toString());
-    }
-    else {
-      $this->messenger()->addStatus($this->t('No Shib session.'));
-    }
 
+    // A Shibboleth session may still exist if a user went straight to the
+    // logout route instead of using the logout link which includes the
+    // Shibboleth logout handler.
+    // if ($this->shibAuth->sessionExists()) {
+    //   // $this->logger->notice('shib session exists.');
+    //   // $this->messenger()->addStatus($this->t('shib session exists.'));
+    //   $shibboleth_logout_url = $this->shibAuth->getLogoutUrl()->toString();
+    //   // $shibboleth_logout_url = 'https://facweb13.s.uw.edu/Shibboleth.sso/Logout?return=/migrations-d9/2013-new-york-yankees';
+    //   // $shibboleth_logout_url = 'https://facweb13.s.uw.edu/Shibboleth.sso/Logout';
+    //
+    //   return new TrustedRedirectResponse($shibboleth_logout_url);
+    // }
+    // else {
+    //
+    //   $this->logger->notice('no shib session');
+    //   $this->messenger()->addStatus($this->t('no shib session'));
+    // }
+
+    $destination = $this->requestStack->getCurrentRequest()->query->get('destination') ?? $this->requestStack->getCurrentRequest()->getBasePath();
     if ($this->currentUser()->isAuthenticated()) {
 
+      // var_dump('hi1');
+      $this->logger->notice('logging out from Drupal');
       $this->messenger()->addStatus($this->t('User logout.'));
       user_logout();
-      return [
-        '#markup' => 'user_logout'
-      ];
-      // return new RedirectResponse($destination);
+
+      if ($this->shibAuth->sessionExists()) {
+        $logout_url = $this->shibAuth->getLogoutHandlerUrl();
+        $id_label = $this->config->get('shibboleth_id_label');
+        $authname = $this->shibAuth->getTargetedId();
+        return [
+          '#markup' => t('<p>Success! You were logged out of this site.</p><p>If you wish, you can also end your @id_label session entirely. Ending the session will result in a sign in prompt if you try to log in again. This is useful if you want to log in with a different @id_label.</p><p><a href="@logout_url">End the @id_label session for %authname</a></p>',
+            [
+              '@id_label' => $id_label,
+              '@logout_url' => $logout_url,
+              '%authname' => $authname,
+            ]),
+        ];
+      //   $this->logger->notice('shib session exists.');
+      //   $this->messenger()->addStatus($this->t('shib session exists.'));
+      //   $shibboleth_logout_url = $this->shibAuth->getLogoutUrl()->toString();
+      //   $shibboleth_logout_url = 'https://facweb13.s.uw.edu/Shibboleth.sso/Logout?return=https://facweb13.s.uw.edu/migrations-d9/2013-new-york-yankees';
+      //   // var_dump($shibboleth_logout_url);
+      //   // $shibboleth_logout_url = 'https://facweb13.s.uw.edu/Shibboleth.sso/Logout';
+      //   return new TrustedRedirectResponse($shibboleth_logout_url);
+      //   return new RedirectResponse($this->requestStack->getCurrentRequest()->getRequestUri());
+      }
+
+
     }
+
+
+    $this->messenger()->addStatus($this->t('log out successful'), TRUE);
+    return new RedirectResponse($destination);
+    // if ($this->shibAuth->sessionExists()) {
+    //   $this->logger->notice('logging out from shib');
+    //   // $temp_url = 'https://facweb13.s.uw.edu/Shibboleth.sso/Logout?return=https://facweb13.s.uw.edu/migrations-d9/shibboleth/logout?destination=/migrations-d9/2013-new-york-yankees';
+    //   // $temp_url = $this->shibAuth->getLogoutUrl()->toString();
+    //   // return new TrustedRedirectResponse($temp_url);
+    //   // // dpm($this->shibAuth->getLogoutUrl(), 'logout url');
+    //   // return [];
+    //   // $this->messenger()->addStatus($this->t('Yes Shib session.'));
+    //   // return [
+    //   //   '#markup' => 'wtf'
+    //   // ];
+    //   // var_dump($this->shibAuth->getLogoutUrl()->toString());
+    //   // A Shibboleth session exists, so redirect to the Shibboleth logout URL.
+    //   $shibboleth_logout_url = $this->shibAuth->getLogoutUrl()->toString();
+    //   return new TrustedRedirectResponse($shibboleth_logout_url);
+    // }
+    // else {
+    //   $this->messenger()->addStatus($this->t('No Shib session.'));
+    // }
+
+
+    // return new RedirectResponse($destination);
     // The user is logged out of Shibboleth. Continue redirecting to the
     // destination.
     // if (!$this->shibAuth->sessionExists()) {

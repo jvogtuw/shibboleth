@@ -410,16 +410,6 @@ class ShibbolethAuthManager {
    * @return \Drupal\Core\Url
    */
   public function getLogoutUrl($destroy_session = TRUE) {
-    // return Url::fromUri('https://facweb13.s.uw.edu/Shibboleth.sso/Logout?return=https://facweb13.s.uw.edu/migrations-d9?destination=/migrations-d9/2013-new-york-yankees');
-
-    // return Url::fromUri('https://facweb13.s.uw.edu/Shibboleth.sso/Logout?return=https://facweb13.s.uw.edu/migrations-d9/boddington');
-    // return Url::fromUserInput('/user/logout?destination=https://facweb13.s.uw.edu/Shibboleth.sso/Logout?target=https://facweb13.s.uw.edu/migrations-d9/what');
-    // This is the callback to process the Shib login with the destination for
-    // the redirect when done.
-    // $drupal_logout_url = Url::fromRoute('user.logout')->toString();
-
-    // $logout_handler = $this->getLogoutHandlerUrl();
-
 
     // Set the destination to redirect to after successful login.
     $destination = '';
@@ -483,45 +473,6 @@ class ShibbolethAuthManager {
     }
     return $logout_url;
 
-
-    // // After destroying the Shibboleth session, redirect either to the home page
-    // // or the path specified in the config.
-    // $return_url = !empty($this->config->get('logout_redirect')) ? Url::fromUserInput($this->config->get('logout_redirect')) : Url::fromRoute('<front>');
-    // // $this->messenger->addError(t('Return url: @return_url.', ['@return_url' => $return_url]));
-    // if (!$destroy_session) {
-    //   return $return_url;
-    // }
-    // // $base_path = $this->requestStack->getCurrentRequest()->getBaseUrl();
-    // // $return_url = $base_path . $return_url->toString();
-    // // Continue to build the full logout URL including the Shibboleth handler.
-    // $options = [
-    //   'query' => [
-    //     'return' => $return_url->toString(),
-    //   ],
-    // ];
-    //
-    // $force_https = $this->config->get('force_https_on_login');
-    // if ($force_https) {
-    //   $options['https'] = TRUE;
-    //   if (empty($_SERVER['HTTPS'])) {
-    //     $options['absolute'] = TRUE;
-    //   }
-    // }
-    //
-    // $logout_handler = $this->getLogoutHandlerUrl();
-    // $logout_url = '';
-    // // The login handler is an absolute URL.
-    // if (parse_url($logout_handler, PHP_URL_HOST)) {
-    //   $logout_url = Url::fromUri($logout_handler, $options);
-    // }
-    // else {
-    //   // Otherwise, the login handler is local.
-    //   $logout_url = Url::fromUserInput($logout_handler, $options);
-    // }
-    //
-    // // return Url::fromUri($logout_handler, $options);
-    // return $logout_url;
-    // return Link::fromTextAndUrl($link_text, $login_url)->toString();
   }
 
 
@@ -534,10 +485,7 @@ class ShibbolethAuthManager {
   public function getLogoutLink() {
     $link_text = $this->config->get('logout_link_text');
     $logout_url = $this->getLogoutUrl();
-    // $logout_url = Url::fromRoute('shibboleth.drupal_logout');
-    // dpm($logout_url, 'logout url');
     $link = Link::fromTextAndUrl($link_text, $logout_url)->toString();
-    // dpm($link, 'link');
     return $link;
   }
 
