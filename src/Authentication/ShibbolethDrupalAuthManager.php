@@ -13,7 +13,6 @@ use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\SessionManagerInterface;
 use Drupal\Core\Url;
-use Drupal\shibboleth\Exception\ShibbolethAutoRegisterException;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
 use mysql_xdevapi\Exception;

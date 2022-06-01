@@ -6,6 +6,7 @@ use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Url;
 use Drupal\shibboleth\Authentication\ShibbolethAuthManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -58,6 +59,8 @@ class ShibbolethLoginBlock extends BlockBase implements ContainerFactoryPluginIn
       $markup .= '<div class="shibboleth-login">' . $this->shib_auth_manager->getLoginLink() . '</div>';
     }
     else {
+      // $logout_route = Url::fromRoute('shibboleth.drupal_logout')->toString();
+      // $markup .= '<div class="shibboleth-logout">' . $logout_route . '</div>';
       $markup .= '<div class="shibboleth-logout">' . $this->shib_auth_manager->getLogoutLink() . '</div>';
     }
     $markup .= '</div>';

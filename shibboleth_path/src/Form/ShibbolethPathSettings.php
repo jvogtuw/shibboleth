@@ -38,6 +38,7 @@ class ShibbolethPathSettings extends ConfigFormBase {
         'user-login' => t('Core user login [/user/login] (recommended*)'),
         'user-password' => t('Core user password reset [/user/password]'),
         'user-register' => t('Core user registration [/user/register]'),
+        'shibboleth-drupal_logout' => t('Shibboleth logout from Drupal [/shibboleth/logout]'),
       ],
       '#default_value' => $config->get('excluded_routes') ? $config->get('excluded_routes') : ['user-login'],
     ];
