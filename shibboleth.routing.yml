@@ -53,15 +53,15 @@ shibboleth.drupal_login:
 #  options:
 #    no_cache: 'TRUE'
 
-shibboleth.shib_destroy:
-  path: '/shibboleth/destroy'
-  defaults:
-    _controller: '\Drupal\shibboleth\Controller\LogoutController::shibDestroy'
-    _title: 'Shibboleth session logout'
-  requirements:
-    _role: 'anonymous'
-  options:
-    no_cache: 'TRUE'
+#shibboleth.shib_destroy:
+#  path: '/shibboleth/destroy'
+#  defaults:
+#    _controller: '\Drupal\shibboleth\Controller\LogoutController::shibDestroy'
+#    _title: 'Shibboleth session logout'
+#  requirements:
+#    _role: 'anonymous'
+#  options:
+#    no_cache: 'TRUE'
 
 shibboleth.drupal_logout:
   drupal:_logout:

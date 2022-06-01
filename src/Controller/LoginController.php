@@ -12,7 +12,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
- * Returns responses for Shibboleth routes.
+ * Returns responses for the route to log in Drupal users via Shibboleth
+ * credentials.
  */
 class LoginController extends ControllerBase {
 
@@ -128,7 +129,7 @@ class LoginController extends ControllerBase {
         }
       }
     }
-
+    $this->logger->notice('login redirecting to external.');
     // No Shibboleth session exists, so redirect to the Shibboleth login URL.
     return new TrustedRedirectResponse($this->shibAuth->getLoginUrl()->toString());
 

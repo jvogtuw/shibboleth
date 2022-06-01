@@ -41,7 +41,7 @@ class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
       $event->getRequest()->attributes->remove('shibboleth_auth_required');
       // Redirect to the Shibboleth authentication only, not Drupal login.
       $auth_redirect = $this->shibAuth->getAuthenticateUrl();
-      $response = new TrustedRedirectResponse($auth_redirect);
+      $response = new TrustedRedirectResponse($auth_redirect->toString());
       $event->setResponse($response);
     }
 
