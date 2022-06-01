@@ -1,0 +1,4 @@
+bypass shibboleth_path rules:
+  title: 'Bypass Shibboleth path access rules'
+  description: 'Access Shibboleth-protected paths without access check.'
+  restrict access: true
