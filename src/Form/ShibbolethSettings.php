@@ -37,14 +37,14 @@ class ShibbolethSettings extends ConfigFormBase {
     $form['shibboleth_handlers']['shibboleth_login_handler_url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Shibboleth login handler URL'),
-      '#description' => $this->t('The URL can be absolute or relative to the server base url: http://www.example.com/Shibboleth.sso/DS; /Shibboleth.sso/DS. As with any config, this setting can be overridden in settings.php. This can be useful when cloning sites to different environments.'),
+      '#description' => $this->t('The URL can be absolute or relative to the server base url: https://www.example.com/Shibboleth.sso/DS; /Shibboleth.sso/DS. As with any config, this setting can be overridden in settings.php. This can be useful when cloning sites to different environments.'),
       '#required' => TRUE,
       '#default_value' => $config->get('shibboleth_login_handler_url'),
     ];
     $form['shibboleth_handlers']['shibboleth_logout_handler_url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Shibboleth logout handler URL'),
-      '#description' => $this->t('The URL can be absolute or relative to the server base url: http://www.example.com/Shibboleth.sso/Logout; /Shibboleth.sso/Logout. As with any config, this setting can be overridden in settings.php. This can be useful when cloning sites to different environments.'),
+      '#description' => $this->t('The URL can be absolute or relative to the server base url: https://www.example.com/Shibboleth.sso/Logout; /Shibboleth.sso/Logout. As with any config, this setting can be overridden in settings.php. This can be useful when cloning sites to different environments.'),
       '#default_value' => $config->get('shibboleth_logout_handler_url'),
     ];
 
@@ -94,11 +94,6 @@ class ShibbolethSettings extends ConfigFormBase {
       '#description' => $this->t('Upon attempting to log in, if no linked user is found, attempt to create a new Drupal user. This is only triggered when a user targets the Shibboleth login route, not for accessing other protected paths. It overrides the Drupal setting for who can register users.'),
       '#default_value' => $config->get('auto_register_user'),
     ];
-    // $form['session_settings']['destroy_session_on_logout'] = [
-    //   '#type' => 'checkbox',
-    //   '#title' => $this->t('Destroy Shibboleth session on Drupal logout'),
-    //   '#default_value' => $config->get('destroy_session_on_logout'),
-    // ];
     $form['session_settings']['login_redirect'] = [
       '#type' => 'textfield',
       '#title' => $this->t('URL to redirect to after login'),
@@ -111,12 +106,6 @@ class ShibbolethSettings extends ConfigFormBase {
       '#description' => $this->t('The URL can be absolute or relative to the server base url. The relative paths will be automatically extended with the site base URL. If you are using SLO, this setting is probably useless (depending on the IdP).'),
       '#default_value' => $config->get('logout_redirect'),
     ];
-    // $form['session_settings']['logout_error_message'] = [
-    //   '#type' => 'textarea',
-    //   '#title' => $this->t('Error Page Message'),
-    //   '#default_value' => $config->get('logout_error_message'),
-    //   '#description' => $this->t('Error message displayed to the user (if an error occurs).'),
-    // ];
 
     $form['display_settings'] = [
       '#type' => 'details',
@@ -144,22 +133,6 @@ class ShibbolethSettings extends ConfigFormBase {
       '#description' => $this->t('Your organization\'s term for the Shibboleth username. For instance, \'NetID\'. This has no technical impact; it\'s simply for displaying to users.'),
       '#default_value' => $config->get('shibboleth_id_label'),
     ];
-
-    // $form['debug_settings'] = [
-    //   '#type' => 'details',
-    //   '#title' => $this->t('Debugging settings'),
-    // ];
-    // $form['debug_settings']['enable_debug_mode'] = [
-    //   '#type' => 'checkbox',
-    //   '#title' => $this->t('Enable DEBUG mode.'),
-    //   '#default_value' => $config->get('enable_debug_mode'),
-    // ];
-    // $form['debug_settings']['debug_path_prefix'] = [
-    //   '#type' => 'textfield',
-    //   '#title' => $this->t('DEBUG path prefix'),
-    //   '#description' => $this->t("For example, use \"/user/\" to display DEBUG messages on paths like \"/user/*\"."),
-    //   '#default_value' => $config->get('debug_path_prefix'),
-    // ];
 
     return parent::buildForm($form, $form_state);
   }

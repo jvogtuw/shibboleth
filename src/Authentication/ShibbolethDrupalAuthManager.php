@@ -4,28 +4,18 @@ namespace Drupal\shibboleth\Authentication;
 
 use Drupal\Component\Utility\Random;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Config\ConfigValueException;
-use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\SessionManagerInterface;
-use Drupal\Core\Url;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
-use mysql_xdevapi\Exception;
 use Psr\Log\LoggerInterface;
 
-// use Psr\Log\LoggerInterface;
-
+/**
+ * Handles functionality to authenticate Drupal users with Shibboleth data.
+ */
 class ShibbolethDrupalAuthManager {
-
-  /**
-   * @var
-   */
-  // protected $user;
 
   /**
    * @var \Drupal\user\UserStorageInterface
@@ -40,11 +30,9 @@ class ShibbolethDrupalAuthManager {
   /**
    * @var \Drupal\shibboleth\Authentication\ShibbolethAuthManager
    */
-  protected $shibAuth;
+  protected $shibbolethAuthManager;
 
   /**
-   * \Drupal\Core\Logger\LoggerChannelInterface
-   *
    * @var \Psr\Log\LoggerInterface
    */
   protected $logger;
@@ -58,13 +46,6 @@ class ShibbolethDrupalAuthManager {
    * @var \Drupal\Core\Session\AccountInterface
    */
   protected $currentUser;
-
-  // protected $potentialUserMatch;
-
-  /**
-   * @var string
-   */
-  protected $errorMessage;
 
   /**
    * @var \Drupal\Core\Messenger\MessengerInterface
@@ -90,7 +71,7 @@ class ShibbolethDrupalAuthManager {
     // $this->db = $db;
     $this->config = $config_factory->get('shibboleth.settings');
     $this->userStorage = $entity_type_manager->getStorage('user');
-    $this->shibAuth = $shib_auth_manager;
+    $this->shibbolethAuthManager = $shib_auth_manager;
     $this->logger = $logger;
     // $this->temp_store_factory = $temp_store_factory;
     $this->sessionManager = $session_manager;
@@ -106,14 +87,6 @@ class ShibbolethDrupalAuthManager {
     }
   }
 
-  // public function getLoginUrl() {
-  //
-  // }
-  //
-  // public function getLogoutUrl() {
-  //   return $this->shibAuth->getLoginUrl();
-  // }
-
   /**
    * Attempts to log in or register a new user associated with the active
    * Shibboleth session.
@@ -124,7 +97,7 @@ class ShibbolethDrupalAuthManager {
   public function loginRegister() {
 
     // No Shibboleth session
-    if (!$this->shibAuth->sessionExists()) {
+    if (!$this->shibbolethAuthManager->sessionExists()) {
       $this->logger->error('Shibboleth login attempt failed. No Shibboleth session was found.');
       return FALSE;
     }
@@ -153,7 +126,7 @@ class ShibbolethDrupalAuthManager {
    *   Drupal, FALSE otherwise.
    */
   public function login() {
-    $authname = $this->shibAuth->getTargetedId();
+    $authname = $this->shibbolethAuthManager->getTargetedId();
 
     // try {
       // Either there's no Shibboleth session or one exists, but no authname was
@@ -193,11 +166,11 @@ class ShibbolethDrupalAuthManager {
    */
   private function registerUser() {
     $user_data = [
-      'name' => $this->shibAuth->getTargetedId(),
-      'mail' => $this->shibAuth->getEmail(),
+      'name' => $this->shibbolethAuthManager->getTargetedId(),
+      'mail' => $this->shibbolethAuthManager->getEmail(),
       'pass' => $this->genPassword(),
       'status' => 1,
-      'shibboleth_username' => $this->shibAuth->getTargetedId(),
+      'shibboleth_username' => $this->shibbolethAuthManager->getTargetedId(),
     ];
 
     try {
@@ -213,26 +186,13 @@ class ShibbolethDrupalAuthManager {
       return $new_user;
     }
     catch (\Exception $e) {
-      $this->logger->error('Unable to create a Drupal user for the Shibboleth ID %authname.', ['%authname' => $this->shibAuth->getTargetedId()]);
+      $this->logger->error('Unable to create a Drupal user for the Shibboleth ID %authname.', ['%authname' => $this->shibbolethAuthManager->getTargetedId()]);
     }
   }
 
   /**
-   * Finalize user login.
-   *
-   * @return bool
-   *
-   * @throws \Exception
+   * @todo Remove?
    */
-  // private function authenticateUser() {
-  //   if (empty($this->user)) {
-  //     $this->setErrorMessage(t('There was an error logging you in.'));
-  //     throw new \Exception('No uid found for user when trying to initialize Drupal session.');
-  //   }
-  //   user_login_finalize($this->user);
-  //   return TRUE;
-  // }
-
   public function logout() {
     user_logout();
   }
@@ -246,7 +206,7 @@ class ShibbolethDrupalAuthManager {
   // public function checkLinkedUser($authname) {
   //   $linked_user_lookup = $this->userStorage
   //     ->loadByProperties([
-  //       'shibboleth_username' => $this->shibAuth->getTargetedId(),
+  //       'shibboleth_username' => $this->shibbolethAuthManager->getTargetedId(),
   //     ]);
   //   $linked_user = reset($linked_user_lookup);
   //   return empty($linked_user) ? FALSE : User::load($linked_user->id());
@@ -266,7 +226,7 @@ class ShibbolethDrupalAuthManager {
   public function getLinkedUser(string $authname) {
     $linked_user_lookup = $this->userStorage
       ->loadByProperties([
-        'shibboleth_username' => $this->shibAuth->getTargetedId(),
+        'shibboleth_username' => $this->shibbolethAuthManager->getTargetedId(),
       ]);
     $linked_user = reset($linked_user_lookup);
     return empty($linked_user) ? FALSE : User::load($linked_user->id());

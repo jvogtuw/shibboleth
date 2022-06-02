@@ -32,12 +32,12 @@ class LoginController extends ControllerBase {
   /**
    * @var \Drupal\shibboleth\Authentication\ShibbolethAuthManager
    */
-  private $shibAuth;
+  private $shibbolethAuthManager;
 
   /**
    * @var \Drupal\shibboleth\Authentication\ShibbolethDrupalAuthManager
    */
-  private $shibDrupalAuth;
+  private $shibbolethDrupalAuthManager;
 
   /**
    * @var \Symfony\Component\HttpFoundation\RequestStack
@@ -54,8 +54,8 @@ class LoginController extends ControllerBase {
    */
   public function __construct(ShibbolethAuthManager $shib_auth, ShibbolethDrupalAuthManager $shib_drupal_auth, RequestStack $request_stack, FormBuilderInterface $form_builder) {
 
-    $this->shibAuth = $shib_auth;
-    $this->shibDrupalAuth = $shib_drupal_auth;
+    $this->shibbolethAuthManager = $shib_auth;
+    $this->shibbolethDrupalAuthManager = $shib_drupal_auth;
     $this->requestStack = $request_stack;
     $this->formBuilder = $form_builder;
     $this->logger = $this->getLogger('shibboleth');
@@ -86,9 +86,9 @@ class LoginController extends ControllerBase {
     $destination = $this->requestStack->getCurrentRequest()->query->get('destination') ?? $this->requestStack->getCurrentRequest()->getBasePath();
 
     // The user is logged into Shibboleth.
-    if ($this->shibAuth->sessionExists()) {
+    if ($this->shibbolethAuthManager->sessionExists()) {
 
-      $authname = $this->shibAuth->getTargetedId();
+      $authname = $this->shibbolethAuthManager->getTargetedId();
       $id_label = $this->config('shibboleth.settings')->get('shibboleth_id_label');
 
       // The user is not logged into Drupal.
@@ -96,7 +96,7 @@ class LoginController extends ControllerBase {
 
         // Attempt to log into Drupal with the Shibboleth ID.
         /** @var \Drupal\user\Entity\User|false $account */
-        $account = $this->shibDrupalAuth->loginRegister();
+        $account = $this->shibbolethDrupalAuthManager->loginRegister();
 
         // Login successful.
         if ($account) {
@@ -110,7 +110,7 @@ class LoginController extends ControllerBase {
       }
       else {
 
-        $current_user_authname = $this->shibDrupalAuth->getShibbolethUsername($this->currentUser()->id());
+        $current_user_authname = $this->shibbolethDrupalAuthManager->getShibbolethUsername($this->currentUser()->id());
 
         // Check if Shibboleth user matches Drupal user.
         if ($current_user_authname == $authname || $this->currentUser()->hasPermission('bypass shibboleth login')) {
@@ -131,7 +131,7 @@ class LoginController extends ControllerBase {
     }
     $this->logger->notice('login redirecting to external.');
     // No Shibboleth session exists, so redirect to the Shibboleth login URL.
-    return new TrustedRedirectResponse($this->shibAuth->getLoginUrl()->toString());
+    return new TrustedRedirectResponse($this->shibbolethAuthManager->getLoginUrl()->toString());
 
   }
 
