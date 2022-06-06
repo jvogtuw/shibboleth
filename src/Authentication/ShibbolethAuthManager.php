@@ -2,7 +2,6 @@
 
 namespace Drupal\shibboleth\Authentication;
 
-
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Logger\LoggerChannelInterface;
@@ -128,15 +127,15 @@ class ShibbolethAuthManager {
   }
 
   /**
-   * Gets the username from the Shibboleth session.
+   * Gets the authname from the Shibboleth session.
    *
    * @return string
-   *   Returns the username from the Shibboleth session. If no username is
+   *   Returns the authname from the Shibboleth session. If no authname is
    *   found, it returns NULL.
    */
   public function getTargetedId() {
     if (!isset($this->targetedId)) {
-      $this->targetedId = self::fixModRewriteIssues($this->config->get('server_variable_username'));
+      $this->targetedId = self::fixModRewriteIssues($this->config->get('server_variable_authname'));
     }
     return $this->targetedId;
   }

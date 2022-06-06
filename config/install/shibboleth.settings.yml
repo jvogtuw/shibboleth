@@ -1,6 +1,6 @@
 shibboleth_login_handler_url: "/Shibboleth.sso/Login"
 shibboleth_logout_handler_url: "/Shibboleth.sso/Logout"
-server_variable_username: "REMOTE_USER"
+server_variable_authname: "REMOTE_USER"
 server_variable_email: "HTTP_UWEDUEMAIL"
 server_variable_affiliation: "UNSCOPED_AFFILIATION"
 server_variable_groups: "ISMEMBEROF"

@@ -89,7 +89,7 @@ class LogoutController extends ControllerBase {
     // Log out the current user.
     if ($this->currentUser()->isAuthenticated()) {
 
-      $authname = $this->shibbolethDrupalAuthManager->getShibbolethUsername($this->currentUser->id());
+      $authname = $this->shibbolethDrupalAuthManager->getShibbolethAuthname($this->currentUser->id());
       user_logout();
       $this->logger->notice($this->t('Shibboleth user %authname logged out.', [ '%authname' => $authname]));
 

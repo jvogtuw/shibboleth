@@ -3,9 +3,11 @@ status: true
 dependencies:
   module:
     - user
-    - shibboleth
-id: user.shibboleth_username
-field_name: shibboleth_username
+  enforced:
+    module:
+      - shibboleth
+id: user.shibboleth_authname
+field_name: shibboleth_authname
 entity_type: user
 type: string
 settings:

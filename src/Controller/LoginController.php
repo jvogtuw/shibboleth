@@ -77,7 +77,7 @@ class LoginController extends ControllerBase {
    * Logs into Drupal with the current Shibboleth user.
    *
    * The Shibboleth session must already exist. This will attempt to log in a
-   * Drupal user that has been mapped to the Shibboleth user ID.
+   * Drupal user that has been mapped to the Shibboleth authname.
    *
    * @return array|RedirectResponse
    */
@@ -110,7 +110,7 @@ class LoginController extends ControllerBase {
       }
       else {
 
-        $current_user_authname = $this->shibbolethDrupalAuthManager->getShibbolethUsername($this->currentUser()->id());
+        $current_user_authname = $this->shibbolethDrupalAuthManager->getShibbolethAuthname($this->currentUser()->id());
 
         // Check if Shibboleth user matches Drupal user.
         if ($current_user_authname == $authname || $this->currentUser()->hasPermission('bypass shibboleth login')) {
@@ -121,8 +121,8 @@ class LoginController extends ControllerBase {
         }
         elseif (!$this->currentUser()->hasPermission('bypass shibboleth login')) {
 
-          // The Shibboleth and Drupal user don't match and the Drupal user
-          // doesn't have permission to bypass Shibboleth login.
+          // The Shibboleth and Drupal user authnames don't match and the Drupal
+          // user doesn't have permission to bypass Shibboleth login.
           $this->messenger()->addError($this->t('You have been logged out of this site because the @id_label <strong>%authname</strong> did not match the Drupal user and the Drupal user did not have permission to bypass Shibboleth login. You can try to log in again. Please contact the site administrator for more information.', ['@id_label' => $id_label, '%authname' => $authname]));
           return $this->loginError();
 

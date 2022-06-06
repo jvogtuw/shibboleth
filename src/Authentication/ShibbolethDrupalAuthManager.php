@@ -110,16 +110,16 @@ class ShibbolethDrupalAuthManager {
     elseif ($this->config->get('auto_register_user')) {
       return $this->registerUser();
     }
-    $this->messenger->addError('nope');
+
     return FALSE;
   }
 
   /**
    * Attempts to log in a Drupal user with a Shibboleth session.
    *
-   * Looks for a Drupal user with its Shibboleth username field matching the
-   * target ID (username) of the active Shibboleth session. If a matching user
-   * is found, it attempts to complete Drupal authentication for that user.
+   * Looks for a Drupal user with its Shibboleth authname field matching that of
+   * the active Shibboleth session. If a matching user is found, it attempts to
+   * complete Drupal authentication for that user.
    *
    * @return bool
    *   Returns TRUE if a matching user was found and successfully logged into
@@ -153,7 +153,7 @@ class ShibbolethDrupalAuthManager {
 
     // Log in the Drupal user.
     user_login_finalize($linked_user);
-    $this->logger->notice('Shibboleth user %authname logged in.', ['%authname' => $authname]);
+    $this->logger->notice('Shibboleth authname %authname logged in.', ['%authname' => $authname]);
     return $linked_user;
 
   }
@@ -171,23 +171,22 @@ class ShibbolethDrupalAuthManager {
       'mail' => $this->shibbolethAuthManager->getEmail(),
       'pass' => $this->genPassword(),
       'status' => 1,
-      'shibboleth_username' => $this->shibbolethAuthManager->getTargetedId(),
+      'shibboleth_authname' => $this->shibbolethAuthManager->getTargetedId(),
     ];
 
     try {
-      // throw new ShibbolethAutoRegisterException('nope');
       // Create a new Drupal user entity.
       /** @var \Drupal\user\UserInterface $new_user */
       $new_user = $this->userStorage->create($user_data);
+
       // Save the new user. Throws an exception on failure, so we can assume
       // success.
       $this->userStorage->save($new_user);
       user_login_finalize($new_user);
-      // $this->currentUser = $new_user;
       return $new_user;
     }
     catch (\Exception $e) {
-      $this->logger->error('Unable to create a Drupal user for the Shibboleth ID %authname.', ['%authname' => $this->shibbolethAuthManager->getTargetedId()]);
+      $this->logger->error('Unable to create a Drupal user for the Shibboleth authname %authname.', ['%authname' => $this->shibbolethAuthManager->getTargetedId()]);
     }
   }
 
@@ -216,10 +215,10 @@ class ShibbolethDrupalAuthManager {
   /**
    * Gets the Drupal user associated with the given Shibboleth authname.
    *
-   * Looks for the authname in the user.shibboleth_username field value.
+   * Looks for the authname in the user.shibboleth_authname field value.
    *
    * @param string $authname
-   *   The Shibboleth username.
+   *   The Shibboleth authname.
    *
    * @return \Drupal\user\Entity\User|bool
    *   Returns a User entity if a match was found, FALSE otherwise.
@@ -228,24 +227,25 @@ class ShibbolethDrupalAuthManager {
     $authname = !empty($authname) ? $authname : $this->shibbolethAuthManager->getTargetedId();
     $linked_user_lookup = $this->userStorage
       ->loadByProperties([
-        'shibboleth_username' => $authname,
+        'shibboleth_authname' => $authname,
       ]);
     $linked_user = reset($linked_user_lookup);
     return empty($linked_user) ? FALSE : User::load($linked_user->id());
   }
 
   /**
-   * Gets the Shibboleth ID mapped to a user.
+   * Gets the Shibboleth authname mapped to a user.
    *
    * @param string $user_id
+   *   The Drupal user ID to look up.
    *
    * @return string
    */
-  public function getShibbolethUsername(string $user_id) {
+  public function getShibbolethAuthname(string $user_id) {
     /** @var UserInterface $account */
     $account = $this->userStorage->load($user_id);
     // @todo Is there a better way to get the property value?
-    return isset($account->get('shibboleth_username')->getValue()[0]) ? $account->get('shibboleth_username')->getValue()[0]['value'] : '';
+    return isset($account->get('shibboleth_authname')->getValue()[0]) ? $account->get('shibboleth_authname')->getValue()[0]['value'] : '';
   }
 
   /**
@@ -269,7 +269,7 @@ class ShibbolethDrupalAuthManager {
   // }
 
   /**
-   * Generate a random password for the Drupal user account.
+   * Generate a random password for a new Drupal user account.
    *
    * @return string
    */

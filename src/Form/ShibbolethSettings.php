@@ -53,11 +53,11 @@ class ShibbolethSettings extends ConfigFormBase {
       '#title' => $this->t('Attribute settings'),
       '#open' => 'open',
     ];
-    $form['attributes']['server_variable_username'] = [
+    $form['attributes']['server_variable_authname'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Server variable for username'),
+      '#title' => $this->t('Server variable for authname'),
       '#required' => TRUE,
-      '#default_value' => $config->get('server_variable_username'),
+      '#default_value' => $config->get('server_variable_authname'),
     ];
     $form['attributes']['server_variable_email'] = [
       '#type' => 'textfield',
@@ -130,7 +130,7 @@ class ShibbolethSettings extends ConfigFormBase {
     $form['display_settings']['shibboleth_id_label'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Shibboleth ID term'),
-      '#description' => $this->t('Your organization\'s term for the Shibboleth username. For instance, \'NetID\'. This has no technical impact; it\'s simply for displaying to users.'),
+      '#description' => $this->t('Your organization\'s term for the Shibboleth authname. For instance, \'NetID\'. This has no technical impact; it\'s simply for displaying to users.'),
       '#default_value' => $config->get('shibboleth_id_label'),
     ];
 
@@ -151,7 +151,7 @@ class ShibbolethSettings extends ConfigFormBase {
     $this->config('shibboleth.settings')
       ->set('shibboleth_login_handler_url', $form_state->getValue('shibboleth_login_handler_url'))
       ->set('shibboleth_logout_handler_url', $form_state->getValue('shibboleth_logout_handler_url'))
-      ->set('server_variable_username', $form_state->getValue('server_variable_username'))
+      ->set('server_variable_authname', $form_state->getValue('server_variable_authname'))
       ->set('server_variable_email', $form_state->getValue('server_variable_email'))
       ->set('server_variable_affiliation', $form_state->getValue('server_variable_affiliation'))
       ->set('server_variable_groups', $form_state->getValue('server_variable_groups'))
