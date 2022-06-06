@@ -110,7 +110,7 @@ class ShibbolethDrupalAuthManager {
     elseif ($this->config->get('auto_register_user')) {
       return $this->registerUser();
     }
-
+    $this->messenger->addError('nope');
     return FALSE;
   }
 
@@ -143,8 +143,9 @@ class ShibbolethDrupalAuthManager {
     // }
 
 
+    $linked_user = $this->getLinkedUser();
+
     // There is no user linked to the Shibboleth authname.
-    $linked_user = $this->getLinkedUser($authname);
     if (!$linked_user) {
       $this->logger->warning('Shibboleth login attempt failed. There is no Drupal user linked to the Shibboleth authname %authname.', ['%authname' => $authname]);
       return FALSE;
@@ -223,10 +224,11 @@ class ShibbolethDrupalAuthManager {
    * @return \Drupal\user\Entity\User|bool
    *   Returns a User entity if a match was found, FALSE otherwise.
    */
-  public function getLinkedUser(string $authname) {
+  public function getLinkedUser(string $authname = '') {
+    $authname = !empty($authname) ? $authname : $this->shibbolethAuthManager->getTargetedId();
     $linked_user_lookup = $this->userStorage
       ->loadByProperties([
-        'shibboleth_username' => $this->shibbolethAuthManager->getTargetedId(),
+        'shibboleth_username' => $authname,
       ]);
     $linked_user = reset($linked_user_lookup);
     return empty($linked_user) ? FALSE : User::load($linked_user->id());
