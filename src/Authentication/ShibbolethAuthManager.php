@@ -4,19 +4,19 @@ namespace Drupal\shibboleth\Authentication;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Link;
-use Drupal\Core\Logger\LoggerChannelInterface;
+// use Drupal\Core\Logger\LoggerChannelInterface;
 use Psr\Log\LoggerInterface;
-use Drupal\Core\Routing\RouteMatch;
+// use Drupal\Core\Routing\RouteMatch;
 use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\shibboleth\Authentication\ShibbolethSession;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\Routing\TrustedRedirectResponse;
-use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\Session\SessionManagerInterface;
+// use Drupal\shibboleth\Authentication\ShibbolethSession;
+// use Drupal\Core\Entity\EntityTypeManagerInterface;
+// use Drupal\Core\Messenger\MessengerInterface;
+// use Drupal\Core\Routing\TrustedRedirectResponse;
+// use Drupal\Core\Session\AccountInterface;
+// use Drupal\Core\Session\SessionManagerInterface;
 use Drupal\Core\Url;
-use Drupal\user\Entity\User;
-use Symfony\Component\HttpFoundation\RedirectResponse;
+// use Drupal\user\Entity\User;
+// use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -77,7 +77,7 @@ class ShibbolethAuthManager {
   /**
    * @var \Drupal\Core\Messenger\MessengerInterface
    */
-  private $messenger;
+  // private $messenger;
 
 
   /**
@@ -91,13 +91,13 @@ class ShibbolethAuthManager {
    * @param \Drupal\Core\Messenger\MessengerInterface         $messenger
    * @param \Drupal\Core\Routing\RouteMatchInterface          $current_route_match
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerInterface $logger, RequestStack $request_stack, AccountInterface $current_user, MessengerInterface $messenger, RouteMatchInterface $current_route_match) {
+  public function __construct(ConfigFactoryInterface $config_factory, LoggerInterface $logger, RequestStack $request_stack/*, AccountInterface $current_user, MessengerInterface $messenger*/, RouteMatchInterface $current_route_match) {
 
     $this->config = $config_factory->get('shibboleth.settings');
     $this->logger = $logger;
     $this->requestStack = $request_stack;
     $this->currentRouteMatch = $current_route_match;
-    $this->messenger = $messenger;
+    // $this->messenger = $messenger;
 
   }
 
@@ -288,7 +288,7 @@ class ShibbolethAuthManager {
       // path. The destination is local and absolute, always starting with a /.
 
       // First, check if the current route is the Shibboleth login page. This
-      // happens upon failure to login to Drupal with a Shibboleth user.
+      // happens upon failure to log in to Drupal with a Shibboleth user.
       // If so, set the destination to the original destination or the front page.
       if ($this->currentRouteMatch->getRouteName() == 'shibboleth.drupal_login') {
         $destination = $this->requestStack->getCurrentRequest()->query->get('destination') ?? $this->requestStack->getCurrentRequest()->getBasePath();

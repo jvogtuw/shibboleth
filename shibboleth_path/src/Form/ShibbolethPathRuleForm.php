@@ -87,13 +87,15 @@ class ShibbolethPathRuleForm extends EntityForm {
     $form['status'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enabled'),
-      // '#description' => $locked ?? $this->t('<strong>This protected path rule is critical to Shibboleth\'s functionality.'),
       '#default_value' => $this->entity->status(),
     ];
 
     return $form;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     // Validate the path pattern format
     $pattern = $form_state->getValue('pattern');
@@ -107,7 +109,7 @@ class ShibbolethPathRuleForm extends EntityForm {
     }
     // and unique to the other protected path rule patterns.
     // Note that it only checks for exact matches. These two paths are not
-    // considered matches: /categories/flowers; /*/flowers
+    // considered matches: '/categories/flowers'; '/*/flowers'.
     else {
       $storage = $this->entityTypeManager->getStorage('shibboleth_path_rule');
       $query = $storage->getQuery()

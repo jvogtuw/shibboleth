@@ -23,5 +23,5 @@ interface ShibbolethPathRuleInterface extends ConfigEntityInterface {
    *
    * @return string[]|string
    */
-  public function getCriteria($asArray = TRUE);
+  public function getCriteria(bool $asArray = TRUE);
 }

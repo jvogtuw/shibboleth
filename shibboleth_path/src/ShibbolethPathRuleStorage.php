@@ -11,23 +11,19 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Path\PathMatcherInterface;
-// use Drupal\Core\Routing\RouteMatch;
-// use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Routing\RouteProviderInterface;
-// use Drupal\Core\Url;
 use Drupal\Core\Messenger\MessengerInterface;
-// use Drupal\shibboleth_path\Entity\ShibbolethPathRule;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-// use Symfony\Component\Routing\Router;
-// use Symfony\Component\Routing\Route;
 
+/**
+ * The storage for Shibboleth path rule entities.
+ */
 class ShibbolethPathRuleStorage extends ConfigEntityStorage implements ShibbolethPathRuleStorageInterface {
 
   /**
    * @var \Drupal\Core\Path\PathMatcherInterface
    */
   private PathMatcherInterface $pathMatcher;
-
 
   /**
    * The shibboleth cache bin.
@@ -49,17 +45,12 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
   /**
    * @var \Symfony\Component\Routing\Route[]
    */
-  private $excluded_routes;
+  private $excludedRoutes;
 
   /**
    * @var string[]
    */
-  private $excluded_paths;
-
-  /**
-   * @var \Symfony\Component\Routing\Router
-   */
-  // private $router;
+  private $excludedPaths;
 
   /**
    * @var \Drupal\Core\Routing\RouteProviderInterface
@@ -69,16 +60,26 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
   /**
    * Constructs a ConfigEntityStorage object.
    *
-   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
+   * @param \Drupal\Core\Entity\EntityTypeInterface             $entity_type
    *   The entity type definition.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface          $config_factory
    *   The config factory service.
-   * @param \Drupal\Component\Uuid\UuidInterface $uuid_service
+   * @param \Drupal\Component\Uuid\UuidInterface                $uuid_service
    *   The UUID service.
-   * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
+   * @param \Drupal\Core\Language\LanguageManagerInterface      $language_manager
    *   The language manager.
    * @param \Drupal\Core\Cache\MemoryCache\MemoryCacheInterface $memory_cache
    *   The memory cache backend.
+   * @param \Drupal\Core\Path\PathMatcherInterface              $path_matcher
+   *   The path matcher.
+   * @param \Drupal\Core\Cache\CacheBackendInterface            $shibboleth_cache
+   *   The Shibboleth path cache.
+   * @param \Drupal\Core\Messenger\MessengerInterface           $messenger
+   *   The messenger.
+   * @param \Drupal\Core\Cache\CacheBackendInterface            $page_cache
+   *   The page cache.
+   * @param \Drupal\Core\Routing\RouteProviderInterface         $route_provider
+   *   The route provider.
    */
   public function __construct(EntityTypeInterface $entity_type, ConfigFactoryInterface $config_factory, UuidInterface $uuid_service, LanguageManagerInterface $language_manager, MemoryCacheInterface $memory_cache, PathMatcherInterface $path_matcher, CacheBackendInterface $shibboleth_cache, MessengerInterface $messenger, CacheBackendInterface $page_cache, RouteProviderInterface $route_provider) {
     parent::__construct($entity_type, $config_factory, $uuid_service, $language_manager, $memory_cache);
@@ -109,62 +110,6 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
   }
 
   /**
-   * Checks if the given path matches the path patterns of any ShibPath and
-   * returns the most granular match(es).
-   *
-   * @param string $path
-   *   The local, absolute path to check.
-   * @param bool   $include_disabled
-   *
-   * @return \Drupal\shibboleth_path\Entity\ShibbolethPathRule[]
-   *   Returns an array of the best (most granular) match(es) for the given path.
-   */
-  // public function getBestMatchesForPath(string $path, $include_disabled = FALSE) {
-  //   // Never check access for these routes
-  //   // @todo Make these always accessible paths a config value.
-  //   // $always_accessible_routes = [
-  //   //   'user.logout',
-  //   //   'shibboleth.drupal_logout',
-  //   // ];
-  //   // foreach ($always_accessible_routes as $always_accessible_route) {
-  //   //   $always_accessible_path = Url::fromRoute($always_accessible_route)->toString();
-  //   //   if ($this->pathMatcher->matchPath($path, $always_accessible_path)) {
-  //   //     return [];
-  //   //   }
-  //   // }
-  //
-  //   // Get all the ShibPaths to check for matches
-  //   $shib_paths = $include_disabled ? parent::loadMultiple() : parent::loadByProperties(['status' => 1]);
-  //   // Remove the 'all' path rule. We can deal with that elsewhere.
-  //   // unset($shib_paths['all']);
-  //   // Select only the most granular match(es).
-  //   // @see Drupal\shibboleth\Access\ShibPathAccessChecker for handling multiple
-  //   // best matches.
-  //   $best_matches = [];
-  //   $current_granularity = 0;
-  //   foreach ($shib_paths as $shib_path) {
-  //     $shib_path_path = $shib_path->get('pattern');
-  //     // Check if the path matches this ShibPath's path.
-  //     if ($this->pathMatcher->matchPath($path, $shib_path_path)) {
-  //       // Compare the granularity of this ShibPath path to the current max
-  //       // granularity. If equal, add the ShibPath path to the $best_matches array.
-  //       $segment_count = count(explode('/', $shib_path_path));
-  //       if ($segment_count >= $current_granularity) {
-  //         // If we've reached a new max granularity, empty the $best_matches array.
-  //         if ($segment_count > $current_granularity) {
-  //           $current_granularity = $segment_count;
-  //           // Reset $best_matches to get rid of the less granular.
-  //           $best_matches = [];
-  //         }
-  //         // Add the full ShibPath object to the best_matches array.
-  //         $best_matches[] = $shib_path;
-  //       }
-  //     }
-  //   }
-  //   return $best_matches;
-  // }
-
-  /**
    * {@inheritdoc}
    */
   public function getMatchingRules(string $path, $best_matches = TRUE, $include_disabled = FALSE) {
@@ -186,14 +131,13 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
     $current_granularity = 0;
     /** @var \Drupal\shibboleth_path\Entity\ShibbolethPathRule $shibboleth_path_rule */
     foreach ($shibboleth_path_rules as $shibboleth_path_rule) {
-
       $rule_pattern = $shibboleth_path_rule->get('pattern');
+
       // Check if the path matches this ShibbolethPathRule's pattern.
       if ($this->pathMatcher->matchPath($path, $rule_pattern)) {
 
         // If $best_matches is TRUE, only get the most granular matches.
         if ($best_matches) {
-
           // Compare the granularity of this ShibbolethPathRule pattern to the
           // $current_granularity. If equal, add the ShibbolethPathRule to the
           // $matches array.
@@ -207,15 +151,12 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
               $matches = [];
             }
             $matches[$shibboleth_path_rule->id()] = $shibboleth_path_rule;
-
           }
         }
         else {
-
           // $best_matches is FALSE so add all matches regardless of
           // granularity.
           $matches[$shibboleth_path_rule->id()] = $shibboleth_path_rule;
-
         }
       }
     }
@@ -239,24 +180,24 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
    * {@inheritdoc}
    */
   public function getExcludedPaths() {
-    if (empty($this->excluded_paths)) {
+    if (empty($this->excludedPaths)) {
       $this->setExcludedRoutes();
     }
-    return $this->excluded_paths;
+    return $this->excludedPaths;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getExcludedRoutes() {
-    if (empty($this->excluded_routes)) {
+    if (empty($this->excludedRoutes)) {
       $this->setExcludedRoutes();
     }
-    return $this->excluded_routes;
+    return $this->excludedRoutes;
   }
 
   /**
-   * Sets the values of $this->excluded_routes and $this->excluded_paths.
+   * Sets the values of $this->excludedRoutes and $this->excludedPaths.
    */
   private function setExcludedRoutes() {
     $config = $this->configFactory->get('shibboleth_path.settings');
@@ -272,8 +213,8 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
         $excluded_paths[] = $route->getPath();
       }
     }
-    $this->excluded_routes = $excluded_routes;
-    $this->excluded_paths = $excluded_paths;
+    $this->excludedRoutes = $excluded_routes;
+    $this->excludedPaths = $excluded_paths;
   }
 
   /**

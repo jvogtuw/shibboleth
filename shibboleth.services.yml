@@ -1,7 +1,7 @@
 services:
   shibboleth.auth_manager:
     class: Drupal\shibboleth\Authentication\ShibbolethAuthManager
-    arguments: [ '@config.factory', '@logger.channel.shibboleth', '@request_stack', '@current_user', '@messenger', '@current_route_match' ]
+    arguments: [ '@config.factory', '@logger.channel.shibboleth', '@request_stack', '@current_route_match' ]
 
   shibboleth.drupal_auth_manager:
     class: Drupal\shibboleth\Authentication\ShibbolethDrupalAuthManager

@@ -33,9 +33,9 @@ class ShibbolethPathSettings extends ConfigFormBase {
     $form['excluded_routes'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Exclude the following routes from Shibboleth protection'),
-      '#description' => $this->t('These settings will override any path access rules that apply to them. They will not override Drupal permissions.<br>* Excluding the <strong>core user login</strong> route is recommended if enabling the "Whole site" path rule.'),
+      '#description' => $this->t('These settings will override any path access rules that apply to them. They will not override Drupal permissions.<br>* Excluding these routes is recommended if enabling the "Whole site" path rule.'),
       '#options' => [
-        'shibboleth-drupal_logout' => t('Shibboleth logout from Drupal [/shibboleth/logout]'),
+        'shibboleth-drupal_logout' => t('Shibboleth logout from Drupal [/shibboleth/logout] (recommended*)'),
         'user-login' => t('Core user login [/user/login] (recommended*)'),
         'user-password' => t('Core user password reset [/user/password]'),
         'user-register' => t('Core user registration [/user/register]'),
