@@ -15,14 +15,9 @@ use Symfony\Component\HttpFoundation\RequestStack;
 class LogoutController extends ControllerBase {
 
   /**
-   * @var \Drupal\shibboleth\Authentication\ShibbolethAuthManager
+   * @var \Symfony\Component\HttpFoundation\RequestStack
    */
-  private $shibbolethAuthManager;
-
-  /**
-   * @var \Drupal\shibboleth\Authentication\ShibbolethDrupalAuthManager
-   */
-  private $shibbolethDrupalAuthManager;
+  private $requestStack;
 
   /**
    * @var \Psr\Log\LoggerInterface
@@ -35,18 +30,27 @@ class LogoutController extends ControllerBase {
   private $config;
 
   /**
-   * @var \Symfony\Component\HttpFoundation\RequestStack
+   * @var \Drupal\shibboleth\Authentication\ShibbolethAuthManager
    */
-  private $requestStack;
+  private $shibbolethAuthManager;
+
+  /**
+   * @var \Drupal\shibboleth\Authentication\ShibbolethDrupalAuthManager
+   */
+  private $shibbolethDrupalAuthManager;
 
   /**
    * LoginController constructor.
    *
-   * @param ShibbolethAuthManager        $shib_auth
-   * @param RequestStack                 $request_stack
-   * @param ShibbolethDrupalAuthManager  $shib_drupal_auth
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   The request stack.
+   * @param \Drupal\shibboleth\Authentication\ShibbolethAuthManager $shib_auth
+   *   The Shibboleth authentication manager.
+   * @param \Drupal\shibboleth\Authentication\ShibbolethDrupalAuthManager $shib_drupal_auth
+   *   The Shibboleth Drupal authentication manager.
    */
-  public function __construct(ShibbolethAuthManager $shib_auth, RequestStack $request_stack, ShibbolethDrupalAuthManager $shib_drupal_auth) {
+  public function __construct(RequestStack $request_stack, ShibbolethAuthManager $shib_auth, ShibbolethDrupalAuthManager $shib_drupal_auth) {
+
     $this->shibbolethAuthManager = $shib_auth;
     $this->shibbolethDrupalAuthManager = $shib_drupal_auth;
     $this->logger = $this->getLogger('shibboleth');
@@ -60,15 +64,14 @@ class LogoutController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('shibboleth.auth_manager'),
       $container->get('request_stack'),
+      $container->get('shibboleth.auth_manager'),
       $container->get('shibboleth.drupal_auth_manager'),
     );
   }
 
   /**
-   * Logs a Shibboleth user out of Drupal, optionally destroying the Shibboleth
-   * session as well.
+   * Logs a Shibboleth user out of Drupal.
    *
    * Note: Depending on your Shibboleth Service Provider configuration, this may
    * only perform a local logout. A local logout removes the session from the
@@ -78,9 +81,10 @@ class LogoutController extends ControllerBase {
    * credentials.
    *
    * @return array|RedirectResponse
+   *   Returns a renderable array or redirects the user to the post-logout
+   *   destination.
    *
-   * @todo Find a way to destroy the session completely AND redirect back to the
-   * site afterwards.
+   * @todo Destroy the Shib session completely AND redirect back to the site.
    */
   public function logout() {
 
@@ -88,16 +92,14 @@ class LogoutController extends ControllerBase {
 
     // Log out the current user.
     if ($this->currentUser()->isAuthenticated()) {
-
       $authname = $this->shibbolethDrupalAuthManager->getShibbolethAuthname($this->currentUser->id());
       user_logout();
-      $this->logger->notice($this->t('Shibboleth user %authname logged out.', [ '%authname' => $authname]));
+      $this->logger->notice($this->t('Shibboleth user %authname logged out.', ['%authname' => $authname]));
 
       // If the Shibboleth session still exists, provide the opportunity to kill
       // it. This may happen if the user went directly to the Shibboleth logout
       // path instead of using the logout link that includes the handler.
       if ($this->shibbolethAuthManager->sessionExists()) {
-
         $logout_handler = $this->shibbolethAuthManager->getLogoutHandlerUrl();
         $id_label = $this->config->get('shibboleth_id_label');
         $authname = $this->shibbolethAuthManager->getTargetedId();
@@ -109,19 +111,14 @@ class LogoutController extends ControllerBase {
               '%authname' => $authname,
             ]),
         ];
-
       }
       else {
         // The Shibboleth session ended.
         // @see logout() docblock for more info about ending Shibboleth sessions.
-        $this->logger->notice($this->t('Shibboleth session ended for %authname.', [ '%authname' => $authname ]));
-
+        $this->logger->notice($this->t('Shibboleth session ended for %authname.', ['%authname' => $authname]));
       }
-
     }
-
     return new RedirectResponse($destination);
-
   }
 
 }
