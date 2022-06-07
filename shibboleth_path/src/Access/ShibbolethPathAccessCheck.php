@@ -18,6 +18,7 @@ use Drupal\path_alias\AliasManagerInterface;
 use Drupal\shibboleth\Authentication\ShibbolethAuthManager;
 use Drupal\shibboleth\Exception\ShibbolethSessionException;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Route;
 
 /**
@@ -115,46 +116,36 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    */
   public function access(Route $route, RouteMatchInterface $route_match, AccountInterface $account) {
 
-    // If the user doesn't have access according to Drupal, don't bother checking
-    // the Shibboleth path access.
+    // If the user doesn't have access according to Drupal, don't bother
+    // checking the Shibboleth path access.
     $current_access_result = $this->requestStack->getCurrentRequest()->attributes->get(AccessAwareRouterInterface::ACCESS_RESULT);
     if (!empty($current_access_result) && !$current_access_result instanceof AccessResultAllowed) {
-      return AccessResult::neutral();
+      return $current_access_result;
     }
 
-    try {
-
-      if ($this->checkAccess()) {
-        return AccessResult::allowed();
-      } else {
-        $id_label = $this->config->get('shibboleth_id_label');
-        $authname = $this->shibbolethAuthManager->getTargetedId();
-        $this->messenger->addError(t('The @id_label <strong>%authname</strong> does not have access to this page. Please contact the site administrator to request access.', ['@id_label' => $id_label, '%authname' => $authname]));
-        $this->logger->warning('A Shibboleth path rule prevented the @id_label %authname from accessing this path.', ['@id_label' => $id_label, '%authname' => $authname]);
-        return AccessResult::forbidden();
-      }
-
+    if ($this->checkAccess($account)) {
+      return AccessResult::allowed();
     }
-    catch (ShibbolethSessionException $exception) {
-
-      // @todo move this check to checkAccess().
-      // if (!$account->hasPermission('bypass shibboleth login')) {
-        $this->requestStack->getCurrentRequest()->attributes->set('shibboleth_auth_required', TRUE);
-        return AccessResult::forbidden();
-      // }
-
+    else {
+      $id_label = $this->config->get('shibboleth_id_label');
+      $authname = $this->shibbolethAuthManager->getTargetedId();
+      $this->messenger->addError(t('The @id_label <strong>%authname</strong> does not have access to this page. Please contact the site administrator to request access.', ['@id_label' => $id_label, '%authname' => $authname]));
+      $this->logger->warning('A Shibboleth path rule prevented the @id_label %authname from accessing this path.', ['@id_label' => $id_label, '%authname' => $authname]);
+      // Throw this exception because AccessResult::forbidden() is cacheable
+      // and messes things up.
+      throw new AccessDeniedHttpException();
     }
-    return AccessResult::allowed();
   }
 
   /**
    * Checks if the current Shibboleth user meets the criteria to access the path.
    *
-   * @return bool
-   *   Returns TRUE if the Shibboleth user meets the criteria. FALSE otherwise.
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The Drupal user to check.
    *
-   * @throws ShibbolethSessionException
-   *   Exception thrown when no active Shibboleth session is found.
+   * @return bool
+   *   Returns TRUE if the Shibboleth user meets the criteria or if the Drupal
+   *   user has permission to bypass path rules. FALSE otherwise.
    */
   protected function checkAccess(AccountInterface $account) {
 
@@ -163,7 +154,6 @@ class ShibbolethPathAccessCheck implements AccessInterface {
     }
 
     $path = $this->requestStack->getCurrentRequest()->getPathInfo();
-
     // Swap the path out for the alias if available.
     $path = $this->aliasManager->getAliasByPath($path);
 
@@ -200,7 +190,6 @@ class ShibbolethPathAccessCheck implements AccessInterface {
     // At this point, the path is protected and there's a Shibboleth session.
     // We'll assume access until we check the other criteria.
     $criteria_met = TRUE;
-    // /** @var \Drupal\shibboleth_path\Entity\ShibbolethPathRule $path_rule */
     foreach ($path_rules as $path_rule) {
       $criteria_type = $path_rule->get('criteria_type');
       $criteria = $path_rule->getCriteria();
@@ -218,7 +207,6 @@ class ShibbolethPathAccessCheck implements AccessInterface {
       }
     }
     return $criteria_met;
-    
   }
 
   /**
@@ -233,17 +221,15 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    *   no rules protect the path. Returns FALSE if the path has not been cached.
    */
   protected function getPathCache(string $path) {
-
     $cid = 'shib_path:' . $path;
     if ($cache = $this->shibbolethCache->get($cid)) {
       return $cache->data;
     }
     return FALSE;
-
   }
 
   /**
-   * Sets the Shibboleth path rules that protect the path.
+   * Caches the Shibboleth path rules that protect the path.
    *
    * @param string $path
    *   The path or alias if available.
@@ -252,10 +238,8 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    *   the key 'rules'.
    */
   protected function setPathCache(string $path, array $data) {
-
     $cid = 'shib_path:' . $path;
     $this->shibbolethCache->set($cid, $data);
-
   }
 
 }
