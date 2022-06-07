@@ -7,8 +7,6 @@ use Drupal\shibboleth\Authentication\ShibbolethAuthManager;
 use Drupal\shibboleth\Exception\ShibbolethSessionException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
-use Symfony\Component\HttpKernel\Event\ResponseEvent;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
@@ -32,23 +30,6 @@ class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
   }
 
   /**
-   * Redirects to Shibboleth authentication (without Drupal login) if required.
-   *
-   * @param \Symfony\Component\HttpKernel\Event\ResponseEvent $event
-   *   Response event.
-   */
-  // public function onResponseShibbolethPathRule(ResponseEvent $event) {
-  //
-  //   if ($event->getRequest()->attributes->get('shibboleth_auth_required')) {
-  //     $event->getRequest()->attributes->remove('shibboleth_auth_required');
-  //     // Redirect to the Shibboleth authentication only, not Drupal login.
-  //     $auth_redirect = $this->shibAuth->getAuthenticateUrl();
-  //     $response = new TrustedRedirectResponse($auth_redirect->toString());
-  //     $event->setResponse($response);
-  //   }
-  //
-  // }
-  /**
    * Redirects users when access is denied.
    *
    * @param \Symfony\Component\HttpKernel\Event\ExceptionEvent $event
@@ -56,9 +37,7 @@ class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
    */
   public function onShibbolethSessionException(ExceptionEvent $event) {
     $exception = $event->getThrowable();
-    // \Drupal::messenger()->addStatus(get_class($exception));
     if ($exception instanceof ShibbolethSessionException) {
-      // \Drupal::messenger()->addStatus('in exception sub');
       $auth_redirect = $this->shibAuth->getAuthenticateUrl();
       $response = new TrustedRedirectResponse($auth_redirect->toString());
       $event->setResponse($response);
@@ -70,8 +49,6 @@ class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     return [
-      // Perform after Authentication and RouterNormalizer
-      // KernelEvents::RESPONSE => ['onResponseShibbolethPathRule', 15],
       // Perform before AuthenticationSubscriber->onExceptionAccessDenied()
       KernelEvents::EXCEPTION => ['onShibbolethSessionException', 70],
     ];
