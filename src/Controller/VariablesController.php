@@ -20,7 +20,7 @@ class VariablesController extends ControllerBase {
 
     $build['server_table'] = [
       '#type' => 'table',
-      '#header' => [ $this->t('Variable'), $this->t('Value') ],
+      '#header' => [$this->t('Variable'), $this->t('Value')],
     ];
 
     foreach ($_SERVER as $id => $var) {
