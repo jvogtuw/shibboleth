@@ -138,10 +138,10 @@ class ShibbolethPathAccessCheck implements AccessInterface {
     catch (ShibbolethSessionException $exception) {
 
       // @todo move this check to checkAccess().
-      if (!$account->hasPermission('bypass shibboleth login')) {
+      // if (!$account->hasPermission('bypass shibboleth login')) {
         $this->requestStack->getCurrentRequest()->attributes->set('shibboleth_auth_required', TRUE);
         return AccessResult::forbidden();
-      }
+      // }
 
     }
     return AccessResult::allowed();
@@ -156,7 +156,12 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    * @throws ShibbolethSessionException
    *   Exception thrown when no active Shibboleth session is found.
    */
-  protected function checkAccess() {
+  protected function checkAccess(AccountInterface $account) {
+
+    if ($account->hasPermission('bypass shibboleth_path rules')) {
+      return TRUE;
+    }
+
     $path = $this->requestStack->getCurrentRequest()->getPathInfo();
 
     // Swap the path out for the alias if available.
@@ -213,6 +218,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
       }
     }
     return $criteria_met;
+    
   }
 
   /**
@@ -227,11 +233,13 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    *   no rules protect the path. Returns FALSE if the path has not been cached.
    */
   protected function getPathCache(string $path) {
+
     $cid = 'shib_path:' . $path;
     if ($cache = $this->shibbolethCache->get($cid)) {
       return $cache->data;
     }
     return FALSE;
+
   }
 
   /**
@@ -244,22 +252,10 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    *   the key 'rules'.
    */
   protected function setPathCache(string $path, array $data) {
+
     $cid = 'shib_path:' . $path;
     $this->shibbolethCache->set($cid, $data);
-    // $this->setShibCacheItem('shib_path:' . $path, $data);
+
   }
 
-  // protected function getShibCacheItem($cid) {
-  //   if ($cache = $this->shibbolethCache->get($cid)) {
-  //     return $cache->data;
-  //   }
-  //   return FALSE;
-  // }
-  // protected function setShibCacheItem($cid, $data) {
-  //   $this->shibbolethCache->set($cid, $data);
-  // }
-
-  // protected function clearSessionAccessChecks() {
-  //   // $this->requestStack->getCurrentRequest()->getSession()->getBag('shibboleth_path')->clear();
-  // }
 }
