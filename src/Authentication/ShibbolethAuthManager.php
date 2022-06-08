@@ -2,6 +2,7 @@
 
 namespace Drupal\shibboleth\Authentication;
 
+use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Link;
 use Psr\Log\LoggerInterface;
@@ -406,7 +407,12 @@ class ShibbolethAuthManager {
       }
       else {
         // Otherwise, use the current path as the destination.
-        $destination = $this->requestStack->getCurrentRequest()->getRequestUri();
+        // First, remove 'check_logged_in' key from the query string if found.
+        // That key will cause an error about cookies after logout.
+        $current_request = $this->requestStack->getCurrentRequest();
+        $query = $current_request->query->all();
+        unset($query['check_logged_in']);
+        $destination = Url::fromUserInput($current_request->getPathInfo(), ['query' => $query])->toString();
       }
     }
 
