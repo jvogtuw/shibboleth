@@ -4,19 +4,9 @@ namespace Drupal\shibboleth\Authentication;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Link;
-// use Drupal\Core\Logger\LoggerChannelInterface;
 use Psr\Log\LoggerInterface;
-// use Drupal\Core\Routing\RouteMatch;
 use Drupal\Core\Routing\RouteMatchInterface;
-// use Drupal\shibboleth\Authentication\ShibbolethSession;
-// use Drupal\Core\Entity\EntityTypeManagerInterface;
-// use Drupal\Core\Messenger\MessengerInterface;
-// use Drupal\Core\Routing\TrustedRedirectResponse;
-// use Drupal\Core\Session\AccountInterface;
-// use Drupal\Core\Session\SessionManagerInterface;
 use Drupal\Core\Url;
-// use Drupal\user\Entity\User;
-// use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -25,80 +15,93 @@ use Symfony\Component\HttpFoundation\RequestStack;
 class ShibbolethAuthManager {
 
   /**
+   * Shibboleth module config.
+   *
    * @var \Drupal\Core\Config\ImmutableConfig
    */
   protected $config;
 
   /**
+   * The logger.
+   *
    * @var \Psr\Log\LoggerChannelInterface
    */
   protected $logger;
 
   /**
+   * The request stack.
+   *
    * @var \Symfony\Component\HttpFoundation\RequestStack
    */
   private $requestStack;
 
   /**
+   * The current route.
+   *
    * @var \Drupal\Core\Routing\RouteMatchInterface
    */
   private $currentRouteMatch;
 
   /**
+   * The Shibboleth session ID.
+   *
    * @var string
    */
   private $sessionId;
 
   /**
+   * The Shibboleth user ID (aka authname).
+   *
    * @var string
    */
   private $targetedId;
 
   /**
+   * The Shibboleth user email.
+   *
    * @var string
    */
   private $email;
 
   /**
+   * The Shibboleth IdP.
+   *
    * @var string
    */
   private $idp;
 
   /**
+   * The Shibboleth user's organizational affiliations.
+   *
    * @var array
    */
   private $affiliation;
 
   /**
+   * The Shibboleth user's organizational group memberships.
+   *
    * @var array
    */
   private $groups;
 
   /**
-   * @var \Drupal\Core\Messenger\MessengerInterface
-   */
-  // private $messenger;
-
-
-  /**
    * Constructor for ShibbolethAuthManager.
    *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface        $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The configuration factory.
-   * @param \Psr\Log\LoggerInterface                          $logger
-   * @param \Symfony\Component\HttpFoundation\RequestStack    $request_stack
-   * @param \Drupal\Core\Session\AccountInterface             $current_user
-   * @param \Drupal\Core\Messenger\MessengerInterface         $messenger
-   * @param \Drupal\Core\Routing\RouteMatchInterface          $current_route_match
+   * @param \Psr\Log\LoggerInterface $logger
+   *   The logger interface.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   The request stack.
+   * @param \Drupal\Core\Routing\RouteMatchInterface $current_route_match
+   *   The current route.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerInterface $logger, RequestStack $request_stack/*, AccountInterface $current_user, MessengerInterface $messenger*/, RouteMatchInterface $current_route_match) {
+  public function __construct(ConfigFactoryInterface $config_factory, LoggerInterface $logger, RequestStack $request_stack, RouteMatchInterface $current_route_match) {
 
     $this->config = $config_factory->get('shibboleth.settings');
     $this->logger = $logger;
     $this->requestStack = $request_stack;
     $this->currentRouteMatch = $current_route_match;
-    // $this->messenger = $messenger;
-
   }
 
   /**
@@ -148,9 +151,10 @@ class ShibbolethAuthManager {
    *   returns NULL.
    */
   public function getEmail() {
+
     if (!isset($this->email)) {
       $email = self::fixModRewriteIssues($this->config->get('server_variable_email'));
-      // Replace the outdated 'u.washington.edu' email domain with 'uw.edu'
+      // Replace the outdated 'u.washington.edu' email domain with 'uw.edu'.
       if (str_replace('@u.washington.edu', '', $email) == $this->getTargetedId()) {
         $email = $this->getTargetedId() . '@uw.edu';
       }
@@ -197,15 +201,14 @@ class ShibbolethAuthManager {
   private function setAffiliation() {
     $affiliation = self::fixModRewriteIssues($this->config->get('server_variable_affiliation')) ?? self::fixModRewriteIssues('UNSCOPED_AFFILIATION');
     $this->affiliation = !empty($affiliation) ? explode(';', $affiliation) : [];
-    // return $this->affiliation;
   }
 
   /**
-   * Gets a list of groups that the user is a member of from the Shibboleth
-   * session.
+   * Gets a list of groups for the user from the Shibboleth session.
    *
    * @return array
-   *   Returns an array of groups. Returns an empty array if no groups are found.
+   *   Returns an array of groups. Returns an empty array if no groups are
+   *   found.
    */
   public function getGroups() {
     if (!isset($this->groups)) {
@@ -215,28 +218,22 @@ class ShibbolethAuthManager {
   }
 
   /**
-   * Sets the list of groups that the user is a member of from the Shibboleth
-   * session.
+   * Sets the list of groups for the user from the Shibboleth session.
    */
   private function setGroups() {
-    $groups = self::fixModRewriteIssues($this->config->get('server_variable_groups')) ?? self::fixModRewriteIssues('isMemberOf');
 
+    $groups = self::fixModRewriteIssues($this->config->get('server_variable_groups')) ?? self::fixModRewriteIssues('isMemberOf');
     $groups_arr = [];
     if (!empty($groups)) {
       $groups_arr = explode(';', $groups);
       // Remove prefixes (separated by ':') from the groups to keep just the
       // group name.
-      for($i = 0; $i < count($groups_arr); $i++) {
+      for ($i = 0; $i < count($groups_arr); $i++) {
         $groups_arr[$i] = trim(substr($groups_arr[$i], strrpos($groups_arr[$i], ':') + 1));
       }
     }
     $this->groups = $groups_arr;
-    // return $this->groups;
   }
-
-  // public function destroySession() {
-  //
-  // }
 
   /**
    * Gets the Shibboleth login handler URL.
@@ -244,9 +241,12 @@ class ShibbolethAuthManager {
    * The URL can be relative or absolute. It won't include the login route or
    * redirect. This configuration may be overridden in settings.php files.
    *
-   * @see $this->getLoginUrl() for the full login URL.
-   *
    * @return string
+   *   Returns the Shibboleth login handler as an absolute URL. The handler URL
+   *   does not contain the redirect target.
+   *
+   * @see $this->getLoginUrl()
+   *   For the full login URL.
    */
   public function getLoginHandlerUrl() {
     return $this->config->get('shibboleth_login_handler_url');
@@ -259,21 +259,25 @@ class ShibbolethAuthManager {
    * redirect. This configuration may be overridden in settings.php files.
    *
    * @return string
-   *   Returns the Shibboleth logout handler as either string.
+   *   Returns the Shibboleth logout handler as an absolute URL. The handler URL
+   *   does not contain the redirect target.
    *
-   * @see $this->getLogoutUrl() for the full logout URL.
+   * @see $this->getLogoutUrl()
+   *   For the full logout URL.
    */
   public function getLogoutHandlerUrl() {
     return $this->config->get('shibboleth_logout_handler_url');
   }
 
   /**
-   * Gets the full login URL including the handler, target and destination paths.
+   * Gets the full login URL.
    *
-   * Use of this path will attempt to log a Shibboleth user into Drupal.
+   * This URL attempts to log a Shibboleth user into Drupal.
    *
    * @return \Drupal\Core\Url
-   *   Returns the full login URL
+   *   Returns the full login URL including the handler, target and destination
+   *   paths. Format: [login-handler]?target=[target?destination=[destination]].
+   *   The target is the absolute URL to the shibboleth.drupal_login route.
    */
   public function getLoginUrl() {
 
@@ -286,10 +290,11 @@ class ShibbolethAuthManager {
     else {
       // The login redirect isn't set in the configuration, so use the current
       // path. The destination is local and absolute, always starting with a /.
-
+      //
       // First, check if the current route is the Shibboleth login page. This
       // happens upon failure to log in to Drupal with a Shibboleth user.
-      // If so, set the destination to the original destination or the front page.
+      // If so, set the destination to the original destination or the front
+      // page.
       if ($this->currentRouteMatch->getRouteName() == 'shibboleth.drupal_login') {
         $destination = $this->requestStack->getCurrentRequest()->query->get('destination') ?? $this->requestStack->getCurrentRequest()->getBasePath();
       }
@@ -297,8 +302,8 @@ class ShibbolethAuthManager {
         // Otherwise, use the current path as the destination.
         $destination = $this->requestStack->getCurrentRequest()->getRequestUri();
       }
-
     }
+
     $destination_options = [
       // Set this just in case, to make sure the destination starts with a /.
       'absolute' => TRUE,
@@ -309,7 +314,6 @@ class ShibbolethAuthManager {
 
     // Shibboleth will redirect to this 'target' route after successfully
     // creating a new Shibboleth session.
-    // $auth_route = $authenticate_only ? 'shibboleth.authenticate' : 'shibboleth.drupal_login';
     $shib_login_url = Url::fromRoute('shibboleth.drupal_login', [], $destination_options)->toString();
     $target_options = [
       'query' => [
@@ -339,29 +343,16 @@ class ShibbolethAuthManager {
   }
 
   /**
-   * Gets the URL for logging into Shibboleth (but not the Drupal site) and then
-   * redirecting to a path within the site.
+   * Gets the URL for logging into Shibboleth, but not the Drupal site.
    *
    * @return \Drupal\Core\Url
+   *   Returns an absolute URL including the handler and redirect target.
+   *   Format: [login-handler]?target=[target].
    */
   public function getAuthenticateUrl() {
 
-    // First, check if the current route is the Shibboleth login page. This
-    // happens upon failure to log in to Drupal with a Shibboleth user.
-    // If so, set the destination to the original destination or the front page.
-    // if ($this->currentRouteMatch->getRouteName() == 'shibboleth.drupal_login') {
-    //   return $this->getLoginUrl()->toString();
-    // }
-    // else {
-      // Set the target destination to redirect to after successful login.
-      // $target = '';
-      // Otherwise, use the current path as the destination.
-      // Grab the base path in case the site is a subsite.
-      // $base_path = $this->requestStack->getCurrentRequest()->getBasePath();
-      // $target = $base_path . $this->requestStack->getCurrentRequest()->getPathInfo();
+    // The target URL to redirect to after logging into Shibboleth.
     $target = $this->requestStack->getCurrentRequest()->getUri();
-    // }
-
     $target_options = [
       'absolute' => TRUE,
       'query' => [
@@ -386,13 +377,15 @@ class ShibbolethAuthManager {
   /**
    * Gets the Shibboleth logout URL.
    *
-   * The URL includes the Shibboleth logout handler, which will destroy the
-   * Shibboleth session, and a 'return' key which is the full URL to return to
-   * after logging out of Shibboleth.
-   *
    * @return \Drupal\Core\Url
+   *   Returns an absolute URL including the Shibboleth logout handler, which
+   *   will destroy* the Shibboleth session, and a 'return' key which is the
+   *   absolute URL to return to after logging out of Shibboleth.
+   *
+   * @see \Drupal\shibboleth\Controller\LogoutController->logout()
+   *   For details about destroying Shibboleth sessions.
    */
-  public function getLogoutUrl($destroy_session = TRUE) {
+  public function getLogoutUrl() {
 
     // Set the destination to redirect to after successful logout.
     $destination = '';
@@ -402,27 +395,19 @@ class ShibbolethAuthManager {
       $destination = Url::fromUserInput($this->config->get('logout_redirect'))->toString();
     }
     else {
-
       // The logout redirect isn't set in the configuration, so use the current
       // path. The destination is local and absolute, always starting with a /.
       //
       // First, check if the current route is the Shibboleth logout page.
-      // If so, set the destination to the original destination or the front page.
+      // If so, set the destination to the original destination or the front
+      // page.
       if ($this->currentRouteMatch->getRouteName() == 'shibboleth.drupal_logout') {
-
         $destination = $this->requestStack->getCurrentRequest()->query->get('destination') ?? $this->requestStack->getCurrentRequest()->getBasePath();
-
       }
       else {
-
         // Otherwise, use the current path as the destination.
-        // Grab the base path in case the site is a subsite.
-        // $base_path = $this->requestStack->getCurrentRequest()->getBasePath();
-        // $destination = $base_path . $this->requestStack->getCurrentRequest()->getPathInfo();
         $destination = $this->requestStack->getCurrentRequest()->getRequestUri();
-
       }
-
     }
 
     $destination_options = [
@@ -460,28 +445,27 @@ class ShibbolethAuthManager {
       // Otherwise, the logout handler is local.
       $logout_url = Url::fromUserInput($logout_handler, $return_options);
     }
-
     return $logout_url;
-
   }
 
   /**
-   * Gets the renderable login link
+   * Gets the renderable login link.
    *
    * @return \Drupal\Core\GeneratedLink
+   *   Returns a renderable link.
    */
   public function getLoginLink() {
 
     $link_text = $this->config->get('login_link_text');
     $login_url = $this->getLoginUrl();
     return Link::fromTextAndUrl($link_text, $login_url)->toString();
-
   }
 
   /**
-   * Gets the renderable logout link
+   * Gets the renderable logout link.
    *
    * @return \Drupal\Core\GeneratedLink
+   *   Returns a renderable link.
    */
   public function getLogoutLink() {
 
@@ -489,17 +473,24 @@ class ShibbolethAuthManager {
     $logout_url = $this->getLogoutUrl();
     $link = Link::fromTextAndUrl($link_text, $logout_url)->toString();
     return $link;
-
   }
 
   /**
-   * Get environment variables that may have been modified by mod_rewrite.
+   * Gets the value of the Shibboleth attribute.
    *
-   * @param $var
+   * Checks various formats of the attribute name to account for modifications
+   * by mod_rewrite.
    *
-   * @return string|NULL
+   * @param string $var
+   *   The Shibboleth session attribute name.
+   *
+   * @return string|null
+   *   Returns the value of the Shibboleth attribute. Returns NULL if the
+   *   attribute was not found
+   *
+   * @todo Legacy function. Rename to getAttribute() or something.
    */
-  protected static function fixModRewriteIssues($var) {
+  protected static function fixModRewriteIssues(string $var) {
 
     if (!$var) {
       return NULL;
@@ -530,4 +521,5 @@ class ShibbolethAuthManager {
 
     return NULL;
   }
+
 }
