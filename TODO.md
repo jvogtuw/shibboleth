@@ -19,6 +19,7 @@ PLANNED FEATURES
 * Create migrations:
   * Config settings
   * User authmaps from Drupal 7 shib_auth
+* Allow use of <front> for redirect config settings.
 
 ### Shibboleth path
 
