@@ -6,7 +6,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
- * Configure Shibboleth settings for this site.
+ * Configure Shibboleth path rule settings.
  */
 class ShibbolethPathSettings extends ConfigFormBase {
 
@@ -28,6 +28,7 @@ class ShibbolethPathSettings extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+
     $config = $this->config('shibboleth_path.settings');
 
     $form['excluded_routes'] = [
@@ -49,14 +50,8 @@ class ShibbolethPathSettings extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    parent::validateForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+
     $this->config('shibboleth_path.settings')
       ->set('excluded_routes', $form_state->getValue('excluded_routes'))
       ->save();
