@@ -2,7 +2,6 @@
 
 namespace Drupal\shibboleth_path\Entity;
 
-use Drupal\Core\Config\ConfigValueException;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\shibboleth_path\ShibbolethPathRuleInterface;
@@ -107,6 +106,8 @@ class ShibbolethPathRule extends ConfigEntityBase implements ShibbolethPathRuleI
   protected $locked;
 
   /**
+   * The list of criteria for the rule.
+   *
    * @var string[]
    */
   private $criteria_list;
@@ -116,7 +117,7 @@ class ShibbolethPathRule extends ConfigEntityBase implements ShibbolethPathRuleI
    *
    * {@inheritdoc}
    *
-   * @todo Add the validation.
+   * @todo Add the validation. Or maybe remove this and depend on the form val.
    */
   public function preSave(EntityStorageInterface $storage) {
     parent::preSave($storage);
@@ -126,9 +127,9 @@ class ShibbolethPathRule extends ConfigEntityBase implements ShibbolethPathRuleI
     // Ensure that the path starts with a slash (/)
     $path_regex = '/^\//i';
     if (!preg_match($path_regex, $this->pattern)) {
-      // throw new ConfigValueException('')
+      // Throw error?
     }
-    // @todo Check if path is unique
+    // @todo Check if path is unique.
   }
 
   /**

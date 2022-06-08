@@ -97,17 +97,18 @@ class ShibbolethPathRuleForm extends EntityForm {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    // Validate the path pattern format
+
+    // Validate the path pattern format.
     $pattern = $form_state->getValue('pattern');
     // The path must be internal...
     if (UrlHelper::isExternal($pattern)) {
       $form_state->setErrorByName('pattern', $this->t('The path pattern must be an internal, absolute path. An external path was entered.'));
     }
-    // and start with a /...
+    // And start with a /...
     elseif (!str_starts_with($pattern, '/')) {
       $form_state->setErrorByName('path', $this->t('The path pattern must start with a slash (/).'));
     }
-    // and unique to the other protected path rule patterns.
+    // And unique to the other protected path rule patterns.
     // Note that it only checks for exact matches. These two paths are not
     // considered matches: '/categories/flowers'; '/*/flowers'.
     else {
@@ -122,12 +123,14 @@ class ShibbolethPathRuleForm extends EntityForm {
         $form_state->setErrorByName('pattern', $this->t('This path pattern is already used by another rule. Enter a unique pattern.'));
       }
     }
+
   }
 
   /**
    * {@inheritdoc}
    */
   public function save(array $form, FormStateInterface $form_state) {
+
     $result = parent::save($form, $form_state);
     $message_args = ['%label' => $this->entity->label()];
     $message = $result == SAVED_NEW
@@ -137,4 +140,5 @@ class ShibbolethPathRuleForm extends EntityForm {
     $form_state->setRedirectUrl($this->entity->toUrl('collection'));
     return $result;
   }
+
 }

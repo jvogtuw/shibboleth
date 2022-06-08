@@ -16,12 +16,15 @@ interface ShibbolethPathRuleInterface extends ConfigEntityInterface {
   public function preSave(EntityStorageInterface $storage);
 
   /**
-   * Gets the criteria for the ShibbolethPathRule.
+   * Gets the criteria for the ShibbolethPathRule entity.
    *
    * @param bool $asArray
    *   Opt to get the return value as an array instead of a string.
    *
    * @return string[]|string
+   *   Returns the path rule's criteria as a string or, if $asArray = TRUE, an
+   *   array.
    */
   public function getCriteria(bool $asArray = TRUE);
+
 }
