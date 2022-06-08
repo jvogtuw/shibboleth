@@ -130,18 +130,11 @@ class ShibbolethSettings extends ConfigFormBase {
     $form['display_settings']['shibboleth_id_label'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Shibboleth ID term'),
-      '#description' => $this->t('Your organization\'s term for the Shibboleth authname. For instance, \'NetID\'. This has no technical impact; it\'s simply for displaying to users.'),
+      '#description' => $this->t("Your organization's term for the Shibboleth authname. For instance, 'NetID'. This has no technical impact; it's simply for displaying to users."),
       '#default_value' => $config->get('shibboleth_id_label'),
     ];
 
     return parent::buildForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    parent::validateForm($form, $form_state);
   }
 
   /**
@@ -163,8 +156,6 @@ class ShibbolethSettings extends ConfigFormBase {
       ->set('login_link_text', $form_state->getValue('login_link_text'))
       ->set('logout_link_text', $form_state->getValue('logout_link_text'))
       ->set('shibboleth_id_label', $form_state->getValue('shibboleth_id_label'))
-      // ->set('enable_debug_mode', $form_state->getValue('enable_debug_mode'))
-      // ->set('debug_path_prefix', $form_state->getValue('debug_path_prefix'))
       ->save();
 
     parent::submitForm($form, $form_state);
