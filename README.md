@@ -58,5 +58,5 @@ CONFIGURATION
 TROUBLESHOOTING & FAQS
 ----------------------
 
-This module is a work in progress. See the (To Do document)[TODO.md] for a list
+This module is a work in progress. See the [To Do document](TODO.md) for a list
 of known issues and planned features.
