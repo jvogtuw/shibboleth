@@ -2,6 +2,9 @@
 
 namespace Drupal\shibboleth_path;
 
+/**
+ * Storage for Shibboleth path rule config entities.
+ */
 interface ShibbolethPathRuleStorageInterface {
 
   /**
@@ -9,9 +12,10 @@ interface ShibbolethPathRuleStorageInterface {
    *
    * @param string $path
    *   The path to check.
-   * @param bool   $best_matches
-   *   Whether to include all matches or just the "best" aka  most granular matches.
-   * @param bool   $include_disabled
+   * @param bool $best_matches
+   *   Whether to include all matches or just the "best" aka  most granular
+   *   matches.
+   * @param bool $include_disabled
    *   Whether to include all rules or just the currently active rules.
    *
    * @return \Drupal\shibboleth_path\Entity\ShibbolethPathRule[]
