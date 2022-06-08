@@ -27,63 +27,89 @@ use Symfony\Component\Routing\Route;
 class ShibbolethPathAccessCheck implements AccessInterface {
 
   /**
+   * The request stack.
+   *
    * @var \Symfony\Component\HttpFoundation\RequestStack
    */
   private $requestStack;
 
   /**
+   * The Shibboleth authentication manager.
+   *
    * @var \Drupal\shibboleth\Authentication\ShibbolethAuthManager
    */
   private $shibbolethAuthManager;
 
   /**
-   * The shibboleth cache bin.
+   * The Shibboleth path rules cache bin.
    *
    * @var \Drupal\Core\Cache\CacheBackendInterface
    */
   protected $shibbolethCache;
 
   /**
+   * The Shibboleth path rule config entity storage.
+   *
    * @var \Drupal\shibboleth_path\ShibbolethPathRuleStorageInterface
    */
   private $pathRuleStorage;
 
   /**
+   * The path alias manager.
+   *
    * @var \Drupal\path_alias\AliasManagerInterface
    */
   private $aliasManager;
 
   /**
+   * The KillSwitch policy.
+   *
    * @var \Drupal\Core\PageCache\ResponsePolicy\KillSwitch
    */
   private $killSwitch;
 
   /**
+   * Shibboleth module configuration.
+   *
    * @var \Drupal\Core\Config\ImmutableConfig
    */
   private $config;
 
   /**
+   * The messenger.
+   *
    * @var \Drupal\Core\Messenger\MessengerInterface
    */
   private $messenger;
 
   /**
+   * The logger.
+   *
    * @var \Psr\Log\LoggerInterface
    */
   protected $logger;
 
-
   /**
-   * @param \Symfony\Component\HttpFoundation\RequestStack          $request_stack
+   * Constructor for ShibbolethPathAccessCheck.
+   *
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   The request stack.
    * @param \Drupal\shibboleth\Authentication\ShibbolethAuthManager $shibboleth_auth_manager
-   * @param \Drupal\Core\Cache\CacheBackendInterface                $shibboleth_cache
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface          $entity_type_manager
-   * @param \Drupal\path_alias\AliasManagerInterface                $alias_manager
-   * @param \Drupal\Core\PageCache\ResponsePolicy\KillSwitch        $kill_switch
-   * @param \Drupal\Core\Config\ConfigFactoryInterface              $config_factory
-   * @param \Drupal\Core\Messenger\MessengerInterface               $messenger
-   * @param \Psr\Log\LoggerInterface                                $logger
+   *   The Shibboleth authentication manager.
+   * @param \Drupal\Core\Cache\CacheBackendInterface $shibboleth_cache
+   *   The Shibboleth path rules cache bin.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
+   * @param \Drupal\path_alias\AliasManagerInterface $alias_manager
+   *   The path alias manager.
+   * @param \Drupal\Core\PageCache\ResponsePolicy\KillSwitch $kill_switch
+   *   The KillSwitch policy.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger.
+   * @param \Psr\Log\LoggerInterface $logger
+   *   The logger.
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
@@ -107,7 +133,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    * @param \Symfony\Component\Routing\Route $route
    *   The route to check against.
    * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
-   *   The parametrized route
+   *   The parametrized route.
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The currently logged in account.
    *
@@ -129,8 +155,10 @@ class ShibbolethPathAccessCheck implements AccessInterface {
     else {
       $id_label = $this->config->get('shibboleth_id_label');
       $authname = $this->shibbolethAuthManager->getTargetedId();
-      $this->messenger->addError(t('The @id_label <strong>%authname</strong> does not have access to this page. Please contact the site administrator to request access.', ['@id_label' => $id_label, '%authname' => $authname]));
-      $this->logger->warning('A Shibboleth path rule prevented the @id_label %authname from accessing this path.', ['@id_label' => $id_label, '%authname' => $authname]);
+      $this->messenger->addError(t('The @id_label <strong>%authname</strong> does not have access to this page. Please contact the site administrator to request access.',
+        ['@id_label' => $id_label, '%authname' => $authname]));
+      $this->logger->warning('A Shibboleth path rule prevented the @id_label %authname from accessing this path.',
+        ['@id_label' => $id_label, '%authname' => $authname]);
       // Throw this exception because AccessResult::forbidden() is cacheable
       // and messes things up.
       throw new AccessDeniedHttpException();
@@ -138,7 +166,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
   }
 
   /**
-   * Checks if the current Shibboleth user meets the criteria to access the path.
+   * Checks if the current Shibboleth user may access the path.
    *
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The Drupal user to check.
@@ -183,7 +211,8 @@ class ShibbolethPathAccessCheck implements AccessInterface {
 
     // Can't continue if there's no Shibboleth session.
     if (!$this->shibbolethAuthManager->sessionExists()) {
-      // Delete any existing rule checks from the session and throw an exception.
+      // Delete any existing rule checks from the session and throw an
+      // exception.
       throw new ShibbolethSessionException('No Shibboleth session found.');
     }
 
@@ -215,7 +244,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    * @param string $path
    *   The path or alias if available.
    *
-   * @return array|FALSE
+   * @return array|false
    *   Returns the cached data for the path. The returned array contains a
    *   'rules' array of ShibbolethPathRule objects. The rules array is empty if
    *   no rules protect the path. Returns FALSE if the path has not been cached.
@@ -233,7 +262,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    *
    * @param string $path
    *   The path or alias if available.
-   * @param array  $data
+   * @param array $data
    *   The data to cache. Should contain an array of ShibbolethPathRules with
    *   the key 'rules'.
    */
