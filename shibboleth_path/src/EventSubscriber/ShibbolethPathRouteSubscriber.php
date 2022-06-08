@@ -7,8 +7,7 @@ use Drupal\Core\Routing\RoutingEvents;
 use Symfony\Component\Routing\RouteCollection;
 
 /**
- * The Shibboleth protected paths route subscriber adds a custom access check
- * to all routes.
+ * Adds a custom access check to all routes.
  */
 class ShibbolethPathRouteSubscriber extends RouteSubscriberBase {
 

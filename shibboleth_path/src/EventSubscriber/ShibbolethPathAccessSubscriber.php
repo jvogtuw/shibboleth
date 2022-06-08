@@ -10,12 +10,13 @@ use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * The Shibboleth path access event subscriber handles Shibboleth authentication
- * redirects.
+ * Handles Shibboleth authentication redirects.
  */
 class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
 
   /**
+   * The Shibboleth authentication manager.
+   *
    * @var \Drupal\shibboleth\Authentication\ShibbolethAuthManager
    */
   private $shibAuth;
@@ -24,6 +25,7 @@ class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
    * Constructs event subscriber.
    *
    * @param \Drupal\shibboleth\Authentication\ShibbolethAuthManager $shib_auth
+   *   The Shibboleth authentication manager.
    */
   public function __construct(ShibbolethAuthManager $shib_auth) {
     $this->shibAuth = $shib_auth;
