@@ -5,11 +5,9 @@ namespace Drupal\shibboleth\Authentication;
 use Drupal\Component\Utility\Random;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\SessionManagerInterface;
 use Drupal\user\Entity\User;
-use Drupal\user\UserInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -18,66 +16,71 @@ use Psr\Log\LoggerInterface;
 class ShibbolethDrupalAuthManager {
 
   /**
+   * User entity storage.
+   *
    * @var \Drupal\user\UserStorageInterface
    */
   protected $userStorage;
 
   /**
+   * The Shibboleth module config.
+   *
    * @var \Drupal\Core\Config\ImmutableConfig
    */
   protected $config;
 
   /**
+   * The Shibboleth authentication manager.
+   *
    * @var \Drupal\shibboleth\Authentication\ShibbolethAuthManager
    */
   protected $shibbolethAuthManager;
 
   /**
+   * The Shibboleth logger channel.
+   *
    * @var \Psr\Log\LoggerInterface
    */
   protected $logger;
 
   /**
+   * The Drupal session manager.
+   *
    * @var \Drupal\Core\Session\SessionManagerInterface
    */
   protected $sessionManager;
 
   /**
+   * The current user.
+   *
    * @var \Drupal\Core\Session\AccountInterface
    */
   protected $currentUser;
 
   /**
-   * @var \Drupal\Core\Messenger\MessengerInterface
-   */
-  protected $messenger;
-
-
-  /**
-   * LoginHandler constructor.
+   * Constructor for ShibbolethDrupalAuthManager.
    *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface              $config_factory
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface          $entity_type_manager
-   * @param \Psr\Log\LoggerInterface                                $logger
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory interface.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager interface.
+   * @param \Psr\Log\LoggerInterface $logger
+   *   The Shibboleth logger channel interface.
    * @param \Drupal\shibboleth\Authentication\ShibbolethAuthManager $shib_auth_manager
-   * @param \Drupal\Core\Session\SessionManagerInterface            $session_manager
-   * @param \Drupal\Core\Session\AccountInterface                   $current_user
-   * @param \Drupal\Core\Messenger\MessengerInterface               $messenger
-   *
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   *   The Shibboleth authentication manager.
+   * @param \Drupal\Core\Session\SessionManagerInterface $session_manager
+   *   The session manager interface.
+   * @param \Drupal\Core\Session\AccountInterface $current_user
+   *   The current user.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, EntityTypeManagerInterface $entity_type_manager, LoggerInterface $logger, ShibbolethAuthManager $shib_auth_manager, SessionManagerInterface $session_manager, AccountInterface $current_user, MessengerInterface $messenger) {
-    // $this->db = $db;
+  public function __construct(ConfigFactoryInterface $config_factory, EntityTypeManagerInterface $entity_type_manager, LoggerInterface $logger, ShibbolethAuthManager $shib_auth_manager, SessionManagerInterface $session_manager, AccountInterface $current_user) {
+
     $this->config = $config_factory->get('shibboleth.settings');
     $this->userStorage = $entity_type_manager->getStorage('user');
     $this->shibbolethAuthManager = $shib_auth_manager;
     $this->logger = $logger;
-    // $this->temp_store_factory = $temp_store_factory;
     $this->sessionManager = $session_manager;
     $this->currentUser = $current_user;
-    $this->messenger = $messenger;
-    // $this->custom_data_store = $this->temp_store_factory->get('shib_auth');
 
     // Start Session if it does not exist yet.
     // This is an artifact from the shib_auth module. Don't know if needed.
@@ -88,15 +91,14 @@ class ShibbolethDrupalAuthManager {
   }
 
   /**
-   * Attempts to log in or register a new user associated with the active
-   * Shibboleth session.
+   * Attempts to log in or register a new user for the Shibboleth user.
    *
-   * @return bool|\Drupal\user\UserInterface
-   * @throws \Exception
+   * @return \Drupal\user\UserInterface|false
+   *   Returns the logged in Drupal user or FALSE if login failed.
    */
   public function loginRegister() {
 
-    // No Shibboleth session
+    // No Shibboleth session.
     if (!$this->shibbolethAuthManager->sessionExists()) {
       $this->logger->error('Shibboleth login attempt failed. No Shibboleth session was found.');
       return FALSE;
@@ -110,7 +112,6 @@ class ShibbolethDrupalAuthManager {
     elseif ($this->config->get('auto_register_user')) {
       return $this->registerUser();
     }
-
     return FALSE;
   }
 
@@ -124,36 +125,32 @@ class ShibbolethDrupalAuthManager {
    * @return bool
    *   Returns TRUE if a matching user was found and successfully logged into
    *   Drupal, FALSE otherwise.
+   *
+   * @throws \Exception
    */
   public function login() {
+
     $authname = $this->shibbolethAuthManager->getTargetedId();
-
-    // try {
-      // Either there's no Shibboleth session or one exists, but no authname was
-      // found. (Check the server attribute you're using.)
-      if (empty($authname)) {
-        $this->logger->error('Shibboleth login attempt failed. A session exists, but the authname is empty.');
-        throw new \Exception('Shibboleth session exists, but the authname is empty.');
-        // return FALSE;
-      }
-    // }
-    // catch (\Exception $e) {
-    //   $this->errorMessage = $e;
-    //   return FALSE;
-    // }
-
+    // Either there's no Shibboleth session or one exists, but no authname was
+    // found. (Check the server attribute you're using.)
+    if (empty($authname)) {
+      $this->logger->error('Shibboleth login attempt failed. A session exists, but the authname is empty.');
+      throw new \Exception('Shibboleth session exists, but the authname is empty.');
+    }
 
     $linked_user = $this->getLinkedUser();
 
-    // There is no user linked to the Shibboleth authname.
+    // There is no Drupal user linked to the Shibboleth authname.
     if (!$linked_user) {
-      $this->logger->warning('Shibboleth login attempt failed. There is no Drupal user linked to the Shibboleth authname %authname.', ['%authname' => $authname]);
+      $this->logger->warning('Shibboleth login attempt failed. There is no Drupal user linked to the Shibboleth authname %authname.',
+        ['%authname' => $authname]);
       return FALSE;
     }
 
     // Log in the Drupal user.
     user_login_finalize($linked_user);
-    $this->logger->notice('Shibboleth authname %authname logged in.', ['%authname' => $authname]);
+    $this->logger->notice('Shibboleth authname %authname logged in.',
+      ['%authname' => $authname]);
     return $linked_user;
 
   }
@@ -164,8 +161,10 @@ class ShibbolethDrupalAuthManager {
    * The newly created user will be logged in.
    *
    * @return \Drupal\user\UserInterface
+   *   Returns the newly created user.
    */
   private function registerUser() {
+
     $user_data = [
       'name' => $this->shibbolethAuthManager->getTargetedId(),
       'mail' => $this->shibbolethAuthManager->getEmail(),
@@ -189,28 +188,6 @@ class ShibbolethDrupalAuthManager {
       $this->logger->error('Unable to create a Drupal user for the Shibboleth authname %authname.', ['%authname' => $this->shibbolethAuthManager->getTargetedId()]);
     }
   }
-
-  /**
-   * @todo Remove?
-   */
-  public function logout() {
-    user_logout();
-  }
-
-  /**
-   * Checks the values of users' Shibboleth username fields for a match.
-   *
-   * @return bool
-   *   Returns TRUE if a user was found, FALSE otherwise.
-   */
-  // public function checkLinkedUser($authname) {
-  //   $linked_user_lookup = $this->userStorage
-  //     ->loadByProperties([
-  //       'shibboleth_username' => $this->shibbolethAuthManager->getTargetedId(),
-  //     ]);
-  //   $linked_user = reset($linked_user_lookup);
-  //   return empty($linked_user) ? FALSE : User::load($linked_user->id());
-  // }
 
   /**
    * Gets the Drupal user associated with the given Shibboleth authname.
@@ -240,38 +217,21 @@ class ShibbolethDrupalAuthManager {
    *   The Drupal user ID to look up.
    *
    * @return string
+   *   Returns the Shibboleth authname associated with the User entity. Returns
+   *   an empty string if the authname value is not set.
    */
   public function getShibbolethAuthname(string $user_id) {
-    /** @var UserInterface $account */
+    /** @var \Drupal\user\UserInterface\UserInterface $account */
     $account = $this->userStorage->load($user_id);
     // @todo Is there a better way to get the property value?
     return isset($account->get('shibboleth_authname')->getValue()[0]) ? $account->get('shibboleth_authname')->getValue()[0]['value'] : '';
   }
 
   /**
-   * @todo Remove
-   */
-  // public function checkPotentialUserMatch() {
-  //   $user_match = user_load_by_name($this->getTargetedId());
-  //   $this->potential_user_match = $user_match ?? FALSE;
-  //   // $this->potential_user_match = FALSE;
-  //   return $this->potential_user_match;
-  // }
-
-  /**
-   * @todo Remove
-   */
-  // public function getPotentialUserMatch() {
-  //   if (is_null($this->potential_user_match)) {
-  //     $this->checkPotentialUserMatch();
-  //   }
-  //   return $this->potential_user_match;
-  // }
-
-  /**
    * Generate a random password for a new Drupal user account.
    *
    * @return string
+   *   Returns a random string.
    */
   private function genPassword() {
     $rand = new Random();

@@ -5,7 +5,7 @@ services:
 
   shibboleth.drupal_auth_manager:
     class: Drupal\shibboleth\Authentication\ShibbolethDrupalAuthManager
-    arguments: [ '@config.factory', '@entity_type.manager', '@logger.channel.shibboleth', '@shibboleth.auth_manager', '@session_manager', '@current_user', '@messenger' ]
+    arguments: [ '@config.factory', '@entity_type.manager', '@logger.channel.shibboleth', '@shibboleth.auth_manager', '@session_manager', '@current_user' ]
 
   logger.channel.shibboleth:
     parent: logger.channel_base
