@@ -142,14 +142,16 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    */
   public function access(Route $route, RouteMatchInterface $route_match, AccountInterface $account) {
 
-    // If the user doesn't have access according to Drupal, don't bother
-    // checking the Shibboleth path access.
-    $current_access_result = $this->requestStack->getCurrentRequest()->attributes->get(AccessAwareRouterInterface::ACCESS_RESULT);
-    if (!empty($current_access_result) && !$current_access_result instanceof AccessResultAllowed) {
-      return $current_access_result;
-    }
+    $path = $this->requestStack->getCurrentRequest()->getPathInfo();
+    // Swap the path out for the alias if available.
+    $path = $this->aliasManager->getAliasByPath($path);
+    $path_url = \Drupal\Core\Url::fromUserInput($path)->toString()
+      ;
+    $route_match_url = \Drupal\Core\Url::fromRouteMatch($route_match)->toString();
 
-    if ($this->checkAccess($account)) {
+    // Compare the current request path to the route path. We only want to check
+    // access to the current page, not any other routes embedded in the page.
+    if ($path_url !== $route_match_url || $this->checkAccess($account, $path)) {
       return AccessResult::allowed();
     }
     else {
@@ -159,9 +161,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
         ['@id_label' => $id_label, '%authname' => $authname]));
       $this->logger->warning('A Shibboleth path rule prevented the @id_label %authname from accessing this path.',
         ['@id_label' => $id_label, '%authname' => $authname]);
-      // Throw this exception because AccessResult::forbidden() is cacheable
-      // and messes things up.
-      throw new AccessDeniedHttpException();
+      return AccessResult::forbidden();
     }
   }
 
@@ -175,12 +175,11 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    *   Returns TRUE if the Shibboleth user meets the criteria or if the Drupal
    *   user has permission to bypass path rules. FALSE otherwise.
    */
-  protected function checkAccess(AccountInterface $account) {
+  protected function checkAccess(AccountInterface $account, string $path) {
 
     if ($account->hasPermission('bypass shibboleth_path rules')) {
       return TRUE;
     }
-
     $path = $this->requestStack->getCurrentRequest()->getPathInfo();
     // Swap the path out for the alias if available.
     $path = $this->aliasManager->getAliasByPath($path);

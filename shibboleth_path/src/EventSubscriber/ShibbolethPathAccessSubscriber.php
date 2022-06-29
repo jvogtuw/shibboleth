@@ -7,6 +7,7 @@ use Drupal\shibboleth\Authentication\ShibbolethAuthManager;
 use Drupal\shibboleth\Exception\ShibbolethSessionException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
