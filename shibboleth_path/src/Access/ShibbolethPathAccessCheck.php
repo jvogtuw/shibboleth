@@ -142,16 +142,21 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    */
   public function access(Route $route, RouteMatchInterface $route_match, AccountInterface $account) {
 
-    $path = $this->requestStack->getCurrentRequest()->getPathInfo();
+    $current_request = $this->requestStack->getCurrentRequest();
+    $current_request_path = $current_request->getPathInfo();
     // Swap the path out for the alias if available.
-    $path = $this->aliasManager->getAliasByPath($path);
-    $path_url = \Drupal\Core\Url::fromUserInput($path)->toString()
-      ;
+    $current_request_path = $this->aliasManager->getAliasByPath($current_request_path);
+
+    // The request path including the base path.
+    $request_uri = $current_request->getBasePath() . $current_request_path;
+    // The path for the route.
     $route_match_url = \Drupal\Core\Url::fromRouteMatch($route_match)->toString();
 
     // Compare the current request path to the route path. We only want to check
     // access to the current page, not any other routes embedded in the page.
-    if ($path_url !== $route_match_url || $this->checkAccess($account, $path)) {
+    if (($route_match_url != $request_uri
+        && empty($this->pathRuleStorage->getMatchingRules($current_request_path)))
+      || $this->checkAccess($account, $current_request_path)) {
       return AccessResult::allowed();
     }
     else {
@@ -170,6 +175,8 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    *
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The Drupal user to check.
+   * @param string $path
+   *   The path to check.
    *
    * @return bool
    *   Returns TRUE if the Shibboleth user meets the criteria or if the Drupal
@@ -180,9 +187,6 @@ class ShibbolethPathAccessCheck implements AccessInterface {
     if ($account->hasPermission('bypass shibboleth_path rules')) {
       return TRUE;
     }
-    $path = $this->requestStack->getCurrentRequest()->getPathInfo();
-    // Swap the path out for the alias if available.
-    $path = $this->aliasManager->getAliasByPath($path);
 
     $cached_path = $this->getPathCache($path);
     $path_rules = [];
