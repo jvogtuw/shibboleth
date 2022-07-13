@@ -42,6 +42,11 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
   private $pageCache;
 
   /**
+   * @var \Drupal\Core\Cache\CacheBackendInterface
+   */
+  private $renderCache;
+
+  /**
    * The list of routes excluded from Shibboleth path rule protection.
    *
    * @var \Symfony\Component\Routing\Route[]
@@ -93,13 +98,17 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
    * @param \Drupal\Core\Routing\RouteProviderInterface $route_provider
    *   The route provider.
    */
-  public function __construct(EntityTypeInterface $entity_type, ConfigFactoryInterface $config_factory, UuidInterface $uuid_service, LanguageManagerInterface $language_manager, MemoryCacheInterface $memory_cache, PathMatcherInterface $path_matcher, CacheBackendInterface $shibboleth_cache, MessengerInterface $messenger, CacheBackendInterface $page_cache, RouteProviderInterface $route_provider) {
+  public function __construct(EntityTypeInterface $entity_type, ConfigFactoryInterface $config_factory, UuidInterface
+  $uuid_service, LanguageManagerInterface $language_manager, MemoryCacheInterface $memory_cache, PathMatcherInterface
+  $path_matcher, CacheBackendInterface $shibboleth_cache, MessengerInterface $messenger, CacheBackendInterface
+  $page_cache, CacheBackendInterface $render_cache, RouteProviderInterface $route_provider) {
     parent::__construct($entity_type, $config_factory, $uuid_service, $language_manager, $memory_cache);
 
     $this->pathMatcher = $path_matcher;
     $this->shibbolethCache = $shibboleth_cache;
     $this->messenger = $messenger;
     $this->pageCache = $page_cache;
+    $this->renderCache = $render_cache;
     $this->routeProvider = $route_provider;
   }
 
@@ -117,6 +126,7 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
       $container->get('cache.shibboleth'),
       $container->get('messenger'),
       $container->get('cache.page'),
+      $container->get('cache.render'),
       $container->get('router.route_provider')
     );
   }
@@ -238,6 +248,8 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
     $this->messenger->addStatus($this->t('Shibboleth paths cache cleared.'));
     $this->pageCache->deleteAll();
     $this->messenger->addStatus($this->t('Page cache cleared.'));
+    $this->renderCache->deleteAll();
+    $this->messenger->addStatus($this->t('Render cache cleared.'));
     return $return;
   }
 
