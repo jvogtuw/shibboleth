@@ -2,6 +2,7 @@
 
 namespace Drupal\shibboleth_path\Access;
 
+use Drupal\Core\Access\AccessManager;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultAllowed;
 use Drupal\Core\Cache\CacheBackendInterface;
@@ -31,7 +32,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    *
    * @var \Symfony\Component\HttpFoundation\RequestStack
    */
-  private $requestStack;
+  // private $requestStack;
 
   /**
    * The Shibboleth authentication manager.
@@ -59,7 +60,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    *
    * @var \Drupal\path_alias\AliasManagerInterface
    */
-  private $aliasManager;
+  // private $aliasManager;
 
   /**
    * The KillSwitch policy.
@@ -80,7 +81,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    *
    * @var \Drupal\Core\Messenger\MessengerInterface
    */
-  private $messenger;
+  // private $messenger;
 
   /**
    * The logger.
@@ -114,16 +115,19 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function __construct(RequestStack $request_stack, ShibbolethAuthManager $shibboleth_auth_manager, CacheBackendInterface $shibboleth_cache, EntityTypeManagerInterface $entity_type_manager, AliasManagerInterface $alias_manager, KillSwitch $kill_switch, ConfigFactoryInterface $config_factory, MessengerInterface $messenger, LoggerInterface $logger) {
+  public function __construct(/*RequestStack $request_stack, */ShibbolethAuthManager $shibboleth_auth_manager,
+CacheBackendInterface $shibboleth_cache, EntityTypeManagerInterface $entity_type_manager/*, AliasManagerInterface
+$alias_manager*/, KillSwitch $kill_switch, ConfigFactoryInterface $config_factory/*, MessengerInterface $messenger*/,
+LoggerInterface $logger) {
 
-    $this->requestStack = $request_stack;
+    // $this->requestStack = $request_stack;
     $this->shibbolethAuthManager = $shibboleth_auth_manager;
     $this->shibbolethCache = $shibboleth_cache;
     $this->pathRuleStorage = $entity_type_manager->getStorage('shibboleth_path_rule');
-    $this->aliasManager = $alias_manager;
+    // $this->aliasManager = $alias_manager;
     $this->killSwitch = $kill_switch;
     $this->config = $config_factory->get('shibboleth.settings');
-    $this->messenger = $messenger;
+    // $this->messenger = $messenger;
     $this->logger = $logger;
   }
 
@@ -140,35 +144,77 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    * @return \Drupal\Core\Access\AccessResultInterface
    *   The access result.
    */
-  public function access(Route $route, RouteMatchInterface $route_match, AccountInterface $account) {
-
-    $current_request = $this->requestStack->getCurrentRequest();
-    $current_request_path = $current_request->getPathInfo();
-    // Swap the path out for the alias if available.
-    $current_request_path = $this->aliasManager->getAliasByPath($current_request_path);
-
-    // The request path including the base path.
-    $request_uri = $current_request->getBasePath() . $current_request_path;
-    // The path for the route.
-    $route_match_url = \Drupal\Core\Url::fromRouteMatch($route_match)->toString();
-
-    // Compare the current request path to the route path. We only want to check
-    // access to the current page, not any other routes embedded in the page.
-    if (($route_match_url != $request_uri
-        && empty($this->pathRuleStorage->getMatchingRules($current_request_path)))
-      || $this->checkAccess($account, $current_request_path)) {
-      return AccessResult::allowed();
-    }
-    else {
-      $id_label = $this->config->get('shibboleth_id_label');
-      $authname = $this->shibbolethAuthManager->getTargetedId();
-      $this->messenger->addError(t('The @id_label <strong>%authname</strong> does not have access to this page. Please contact the site administrator to request access.',
-        ['@id_label' => $id_label, '%authname' => $authname]));
-      $this->logger->warning('A Shibboleth path rule prevented the @id_label %authname from accessing this path.',
-        ['@id_label' => $id_label, '%authname' => $authname]);
-      return AccessResult::forbidden();
-    }
-  }
+  // public function access(Route $route, RouteMatchInterface $route_match, AccountInterface $account) {
+  //
+  //   // dpm($route, 'route');
+  //   // dpm($route_match, 'route_match');
+  //   // if ($this->requestStack->getCurrentRequest()->se)
+  //   $current_request = $this->requestStack->getCurrentRequest();
+  //   // if ($current_request) {
+  //   //   dpm($current_request, 'currentRequest');
+  //   // }
+  //   // $parent_request = $this->requestStack->getParentRequest();
+  //   // if ($parent_request) {
+  //   //   dpm($parent_request, 'parentRequest');
+  //   // }
+  //   // $master_request = $this->requestStack->getMasterRequest();
+  //   // if ($master_request) {
+  //   //   dpm($master_request, 'masterRequest');
+  //   // }
+  //
+  //   // dpm($this->requestStack->getParentRequest(), 'parentRequest');
+  //   // dpm($this->requestStack->getMasterRequest(), 'masterRequest');
+  //   // return AccessResult::allowed();
+  //
+  //   $current_request_path = $current_request->getPathInfo();
+  //   // $this->messenger->addStatus('request HTTP_REFERER: ' . $current_request->server->get('HTTP_REFERER'), TRUE);
+  //
+  //   // $this->messenger->addStatus('current_request_path: ' . $current_request_path, TRUE);
+  //   // dpm($current_request, 'current_request for ' . $current_request_path);
+  //   // Swap the path out for the alias if available.
+  //   $current_request_path = $this->aliasManager->getAliasByPath($current_request_path);
+  //   // $this->messenger->addStatus('current_request_path (alias): ' . $current_request_path, TRUE);
+  //   // The request path including the base path.
+  //   $request_uri = $current_request->getBasePath() . $current_request_path;
+  //   // The path for the route.
+  //   $route_match_url = \Drupal\Core\Url::fromRouteMatch($route_match)->toString();
+  //
+  //   // $this->messenger->addStatus('route_match_url: ' . $route_match_url, TRUE);
+  //   // $this->messenger->addStatus('request_uri: ' . $request_uri, TRUE);
+  //   // $this->messenger->addStatus('whyyyyyyyyyyy');
+  //   // Compare the current request path to the route path. We only want to check
+  //   // access to the current page, not any other routes embedded in the page.
+  //   // if (($route_match_url != $request_uri
+  //   //     /*&& empty($this->pathRuleStorage->getMatchingRules($current_request_path))*/)
+  //   //   || $this->checkAccess($account, $current_request_path)) {
+  //   // if (isset($_SESSION['shib_path'][$current_request_path])) {
+  //   //   // $this->messenger->addStatus('current_request_path: ' . $current_request_path, TRUE);
+  //   //   return $_SESSION['shib_path'][$current_request_path] ? AccessResult::allowed() :
+  //   //     AccessResult::forbidden();
+  //   // }
+  //
+  //   // dpm($_SESSION, 'session');
+  //   // $this->messenger->addStatus('route_match_url: ' . $route_match_url);
+  //   // $this->messenger->addStatus('request_uri: ' . $request_uri);
+  //   // $this->messenger->addStatus('current_request_path: ' . $current_request_path);
+  //     if ($this->checkAccess($account, $current_request_path)) {
+  //     // $this->messenger->addStatus('route_match_url: ' . $route_match_url);
+  //     // $this->messenger->addStatus('request_uri: ' . $request_uri);
+  //     // $this->messenger->addStatus('current_request_path: ' . $current_request_path);
+  //     // dpm($this->pathRuleStorage->getMatchingRules($current_request_path), 'matching rules for ' .
+  //     //   $current_request_path);
+  //     return AccessResult::allowed();
+  //   }
+  //   else {
+  //     $id_label = $this->config->get('shibboleth_id_label');
+  //     $authname = $this->shibbolethAuthManager->getTargetedId();
+  //     $this->messenger->addError(t('The @id_label <strong>%authname</strong> does not have access to this page. Please contact the site administrator to request access.',
+  //       ['@id_label' => $id_label, '%authname' => $authname]));
+  //     $this->logger->warning('A Shibboleth path rule prevented the @id_label %authname from accessing this path.',
+  //       ['@id_label' => $id_label, '%authname' => $authname]);
+  //     return AccessResult::forbidden();
+  //   }
+  // }
 
   /**
    * Checks if the current Shibboleth user may access the path.
@@ -182,7 +228,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    *   Returns TRUE if the Shibboleth user meets the criteria or if the Drupal
    *   user has permission to bypass path rules. FALSE otherwise.
    */
-  protected function checkAccess(AccountInterface $account, string $path) {
+  public function checkAccess(AccountInterface $account, string $path) {
 
     if ($account->hasPermission('bypass shibboleth_path rules')) {
       return TRUE;
