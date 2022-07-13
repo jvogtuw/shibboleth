@@ -91,7 +91,7 @@ class ShibbolethPathAccessCheck implements AccessInterface {
     $this->shibbolethCache = $shibboleth_cache;
     $this->pathRuleStorage = $entity_type_manager->getStorage('shibboleth_path_rule');
     $this->killSwitch = $kill_switch;
-    $this->config = $config_factory->get('shibboleth.settings');
+    $this->config = $config_factory->get('shibboleth_path.settings');
     $this->logger = $logger;
   }
 
@@ -120,8 +120,9 @@ class ShibbolethPathAccessCheck implements AccessInterface {
       $path_rules = $cached_path['rules'];
     }
     else {
+      $permissive_enforcement = $this->config->get('enforcement') == 'permissive';
       /** @var \Drupal\shibboleth_path\Entity\ShibbolethPathRule $path_rules[] */
-      $path_rules = $this->pathRuleStorage->getMatchingRules($path);
+      $path_rules = $this->pathRuleStorage->getMatchingRules($path, $permissive_enforcement);
 
       // Build the data for the cache item.
       $data = ['rules' => $path_rules];

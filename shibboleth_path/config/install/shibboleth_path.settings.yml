@@ -1,3 +1,4 @@
 excluded_routes:
   - 'user-login'
   - 'shibboleth-drupal_logout'
+enforcement: 'strict'

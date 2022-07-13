@@ -36,3 +36,14 @@ function shibboleth_path_requirements($phase) {
 
   return $requirements;
 }
+
+/**
+ * Set a default value for rule enforcement.
+ */
+function shibboleth_path_update_9001() {
+
+  // Set the default dumper plugin to kint if kint module is available.
+  \Drupal::configFactory()->getEditable('shibboleth_path.settings')
+    ->set('enforcement', 'strict')
+    ->save(TRUE);
+}
