@@ -2,7 +2,7 @@ name: Shibboleth protected paths
 type: module
 description: Restrict access to paths without requiring Drupal authentication.
 package: Authentication
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^9 || ^10
 
 configure: entity.shibboleth_path_rule.collection
 
