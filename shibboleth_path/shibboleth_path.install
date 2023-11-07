@@ -20,24 +20,6 @@ function shibboleth_path_uninstall() {
 }
 
 /**
- * Implements hook_requirements().
- */
-function shibboleth_path_requirements($phase) {
-  $requirements = [];
-
-  if ($phase == 'runtime') {
-    $value = mt_rand(0, 100);
-    $requirements['shibboleth_path_status'] = [
-      'title' => t('Shibboleth protected path status'),
-      'value' => t('Shibboleth protected path value: @value', ['@value' => $value]),
-      'severity' => $value > 50 ? REQUIREMENT_INFO : REQUIREMENT_WARNING,
-    ];
-  }
-
-  return $requirements;
-}
-
-/**
  * Set a default value for rule enforcement.
  */
 function shibboleth_path_update_9001() {

@@ -18,21 +18,3 @@ function shibboleth_install() {
 function shibboleth_uninstall() {
   \Drupal::messenger()->addStatus(__FUNCTION__);
 }
-
-/**
- * Implements hook_requirements().
- */
-function shibboleth_requirements($phase) {
-  $requirements = [];
-
-  if ($phase == 'runtime') {
-    $value = mt_rand(0, 100);
-    $requirements['shibboleth_status'] = [
-      'title' => t('Shibboleth status'),
-      'value' => t('Shibboleth value: @value', ['@value' => $value]),
-      'severity' => $value > 50 ? REQUIREMENT_INFO : REQUIREMENT_WARNING,
-    ];
-  }
-
-  return $requirements;
-}
