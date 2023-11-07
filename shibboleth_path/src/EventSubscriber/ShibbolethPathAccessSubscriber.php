@@ -67,7 +67,7 @@ class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
   public function onRequestCheckAccess(RequestEvent $event) {
 
     $request = $event->getRequest();
-    if (!$event->isMasterRequest() || !$request->isMethod('GET')) {
+    if (!$event->isMainRequest() || !$request->isMethod('GET')) {
       return;
     }
 
