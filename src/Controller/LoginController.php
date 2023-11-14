@@ -121,8 +121,8 @@ class LoginController extends ControllerBase {
     }
 
     // No Shibboleth session exists, so redirect to the Shibboleth login URL.
-    $this->logger->notice('login redirecting to external.');
-    return new TrustedRedirectResponse($this->shibbolethAuthManager->getLoginUrl()->toString()->getGeneratedUrl());
+    $response = new TrustedRedirectResponse($this->shibbolethAuthManager->getLoginUrl()->toString(TRUE)->getGeneratedUrl());
+    return $response->send();
   }
 
   /**
