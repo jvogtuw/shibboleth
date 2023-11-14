@@ -77,7 +77,9 @@ class LoginController extends ControllerBase {
    */
   public function login() {
 
-    $destination = $this->requestStack->getCurrentRequest()->query->get('destination') ?? $this->requestStack->getCurrentRequest()->getBasePath();
+    // Get the redirect destination if there is one. Otherwise, set the
+    // destination to the homepage.
+    $destination = $this->requestStack->getCurrentRequest()->query->get('destination') ?? \Drupal::urlGenerator()->generateFromRoute('<front>', []);
 
     // The user is logged into Shibboleth.
     if ($this->shibbolethAuthManager->sessionExists()) {
