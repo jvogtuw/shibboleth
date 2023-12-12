@@ -155,8 +155,9 @@ class ShibbolethAuthManager {
 
     if (!isset($this->email)) {
       $email = self::fixModRewriteIssues($this->config->get('server_variable_email'));
-      // Replace the outdated 'u.washington.edu' email domain with 'uw.edu'.
-      if (str_replace('@u.washington.edu', '', $email) == $this->getTargetedId()) {
+      // Replace the outdated email domains with 'uw.edu'.
+      $legacy_email_domains = ['@u.washington.edu', '@washington.edu'];
+      if (in_array(str_replace($this->getTargetedId(), '', $email), $legacy_email_domains)) {
         $email = $this->getTargetedId() . '@uw.edu';
       }
       $this->email = $email;
