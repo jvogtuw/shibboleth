@@ -2,6 +2,7 @@
 
 namespace Drupal\shibboleth\Authentication;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Link;
@@ -276,12 +277,16 @@ class ShibbolethAuthManager {
    *
    * This URL attempts to log a Shibboleth user into Drupal.
    *
+   * @param bool $target_relative
+   *   Set the 'target' to a relative path. If FALSE (default), the target is
+   *   absolute. Set to TRUE if using a redirect to access the login URL.
+   *
    * @return \Drupal\Core\Url
    *   Returns the full login URL including the handler, target and destination
    *   paths. Format: [login-handler]?target=[target?destination=[destination]].
    *   The target is the absolute URL to the shibboleth.drupal_login route.
    */
-  public function getLoginUrl() {
+  public function getLoginUrl(bool $target_relative = FALSE) {
 
     // Set the destination to redirect to after successful login.
     $destination = '';
@@ -316,7 +321,12 @@ class ShibbolethAuthManager {
 
     // Shibboleth will redirect to this 'target' route after successfully
     // creating a new Shibboleth session.
-    $shib_login_url = Url::fromRoute('shibboleth.drupal_login', [], $destination_options)->toString();
+    $shib_login_url = Url::fromRoute('shibboleth.drupal_login', [],
+      $destination_options);
+    if ($target_relative) {
+      $shib_login_url->setAbsolute(FALSE);
+    }
+    $shib_login_url = $shib_login_url->toString();
     $target_options = [
       'query' => [
         'target' => $shib_login_url,
