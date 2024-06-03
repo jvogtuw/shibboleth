@@ -103,6 +103,12 @@ function shibboleth_tokens($type, $tokens, array $data, array $options, Bubbleab
                 break;
             }
           }
+          if ($affiliation_tokens = \Drupal::token()->findWithPrefix($tokens,
+            'user-affiliations')) {
+            $affiliations = $shib_auth_mgr->getAffiliation() ?? [];
+            $affiliations_names = array_combine($affiliations, $affiliations);
+            $replacements += \Drupal::token()->generate('array', $affiliation_tokens, ['array' => $affiliations_names], $options, $bubbleable_metadata);
+          }
         }
         catch (Exception $e) {
           foreach ($tokens as $name => $original) {
