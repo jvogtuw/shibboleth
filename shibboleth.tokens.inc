@@ -65,7 +65,7 @@ function shibboleth_tokens($type, $tokens, array $data, array $options, Bubbleab
           foreach ($tokens as $name => $original) {
             switch ($name) {
               case 'login-url':
-                $replacements[$original] = $shib_auth_mgr->getLoginUrl(TRUE)->toString();
+                $replacements[$original] = $shib_auth_mgr->getLoginUrl()->toString();
                 break;
             }
           }
