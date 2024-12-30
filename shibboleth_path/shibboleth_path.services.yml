@@ -1,11 +1,12 @@
 services:
+
   shibboleth.path_access_subscriber:
     class: Drupal\shibboleth_path\EventSubscriber\ShibbolethPathAccessSubscriber
-    arguments: [ '@shibboleth.auth_manager', '@shibboleth_path.access_check', '@current_user', '@session_manager' ]
+    arguments: [ '@shibboleth.auth_manager', '@access_check.shibboleth_path.path_access', '@current_user', '@session_manager' ]
     tags:
       - { name: event_subscriber }
 
-  shibboleth_path.access_check:
+  access_check.shibboleth_path.path_access:
     class: Drupal\shibboleth_path\Access\ShibbolethPathAccessCheck
     arguments: [ '@shibboleth.auth_manager', '@cache.shibboleth', '@entity_type.manager','@page_cache_kill_switch', '@config.factory', '@logger.channel.shibboleth' ]
 
