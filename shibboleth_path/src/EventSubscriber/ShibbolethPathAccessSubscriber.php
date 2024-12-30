@@ -3,7 +3,11 @@
 namespace Drupal\shibboleth_path\EventSubscriber;
 
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Access\AccessResultAllowed;
+use Drupal\Core\Access\AccessResultInterface;
+use Drupal\Core\Http\Exception\CacheableAccessDeniedHttpException;
 use Drupal\Core\Routing\AccessAwareRouterInterface;
+use Drupal\Core\Routing\RouteMatch;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\SessionManagerInterface;
@@ -11,6 +15,7 @@ use Drupal\shibboleth\Authentication\ShibbolethAuthManager;
 use Drupal\shibboleth\Exception\ShibbolethSessionException;
 use Drupal\shibboleth_path\Access\ShibbolethPathAccessCheck;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Finder\Exception\AccessDeniedException;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
@@ -71,22 +76,21 @@ class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
       return;
     }
 
+    // If access is already blocked via an AccessAwareRouter, accept that result.
     $access_result = $request->attributes->get(AccessAwareRouterInterface::ACCESS_RESULT);
-    if ($access_result && !$access_result->isAllowed()) {
+    if ($access_result && !$access_result instanceof AccessResultAllowed) {
       return;
     }
 
     $request_path = $request->getPathInfo();
-    $shib_path_check = $this->shibPathAccess->checkAccess($this->currentUser, $request_path);
-    $shib_access_result = $shib_path_check ? AccessResult::allowed() : AccessResult::forbidden();
-
-    if (!$shib_access_result->isAllowed()) {
+    $shib_access_result = $this->shibPathAccess->checkAccess($this->currentUser, $request_path);
+    $request->attributes->set(AccessAwareRouterInterface::ACCESS_RESULT, $shib_access_result);
+    if (!$shib_access_result instanceof AccessResultAllowed) {
       \Drupal::messenger()->addWarning(t('The NetID <strong>%netid</strong> cannot access this page. Contact the site owner to request access or close all browser windows to log out and try again with a different NetID.',
         ['%netid' => $this->shibAuth->getTargetedId()]
       ));
       throw new AccessDeniedHttpException('Blocked by Shibboleth path rule.');
     }
-
   }
 
   /**
@@ -108,11 +112,10 @@ class ShibbolethPathAccessSubscriber implements EventSubscriberInterface {
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
-    return [
-      KernelEvents::REQUEST => ['onRequestCheckAccess', 35],
-      // Perform before AuthenticationSubscriber->onExceptionAccessDenied()
-      KernelEvents::EXCEPTION => ['onShibbolethSessionException', 70],
-    ];
+    $events[KernelEvents::REQUEST][] = ['onRequestCheckAccess', -500];
+    // Perform before AuthenticationSubscriber->onExceptionAccessDenied()
+    $events[KernelEvents::EXCEPTION][] = ['onShibbolethSessionException', 70];
+    return $events;
   }
 
 }

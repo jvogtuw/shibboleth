@@ -2,10 +2,10 @@
 
 namespace Drupal\shibboleth_path\Access;
 
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Psr\Log\LoggerInterface;
 use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
 use Drupal\Core\Routing\Access\AccessInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -53,18 +53,11 @@ class ShibbolethPathAccessCheck implements AccessInterface {
   private $config;
 
   /**
-   * The messenger.
+   * An array of rules that apply to the current path.
    *
-   * @var \Drupal\Core\Messenger\MessengerInterface
+   * @var \Drupal\shibboleth_path\Entity\ShibbolethPathRule[]
    */
-  // private $messenger;
-
-  /**
-   * The logger.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected $logger;
+  private $pathRules;
 
   /**
    * Constructor for ShibbolethPathAccessCheck.
@@ -79,20 +72,39 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    *   The KillSwitch policy.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
-   * @param \Psr\Log\LoggerInterface $logger
-   *   The logger.
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function __construct(ShibbolethAuthManager $shibboleth_auth_manager, CacheBackendInterface $shibboleth_cache, EntityTypeManagerInterface $entity_type_manager, KillSwitch $kill_switch, ConfigFactoryInterface $config_factory, LoggerInterface $logger) {
+  public function __construct(ShibbolethAuthManager $shibboleth_auth_manager, CacheBackendInterface $shibboleth_cache, EntityTypeManagerInterface $entity_type_manager, KillSwitch $kill_switch, ConfigFactoryInterface $config_factory) {
 
     $this->shibbolethAuthManager = $shibboleth_auth_manager;
     $this->shibbolethCache = $shibboleth_cache;
     $this->pathRuleStorage = $entity_type_manager->getStorage('shibboleth_path_rule');
     $this->killSwitch = $kill_switch;
     $this->config = $config_factory->get('shibboleth_path.settings');
-    $this->logger = $logger;
+  }
+
+  /**
+   * Determines if the access check applies to the path.
+   */
+  public function applies(string $path): bool {
+    $cached_path = $this->getPathCache($path);
+    if (empty($this->pathRules)) {
+      // If the path has been cached, we already know the rules that apply.
+      if ($cached_path) {
+        $this->pathRules = $cached_path['rules'];
+      }
+      else {
+        $permissive_enforcement = $this->config->get('enforcement') == 'permissive';
+        $this->pathRules = $this->pathRuleStorage->getMatchingRules($path, $permissive_enforcement);
+
+        // Build the data for the cache item.
+        $data = ['rules' => $this->pathRules];
+        $this->setPathCache($path, $data);
+      }
+    }
+    return !empty($this->pathRules);
   }
 
   /**
@@ -103,36 +115,21 @@ class ShibbolethPathAccessCheck implements AccessInterface {
    * @param string $path
    *   The path to check.
    *
-   * @return bool
-   *   Returns TRUE if the Shibboleth user meets the criteria or if the Drupal
-   *   user has permission to bypass path rules. FALSE otherwise.
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   Returns The access result for it Shibboleth user meets the criteria or
+   *   if the Drupal user has permission to bypass path rules. FALSE otherwise.
    */
-  public function checkAccess(AccountInterface $account, string $path) {
-
+ public function checkAccess(AccountInterface $account, string $path) {
     if ($account->hasPermission('bypass shibboleth_path rules')) {
-      return TRUE;
+      return AccessResult::allowed();
     }
 
-    $cached_path = $this->getPathCache($path);
-    $path_rules = [];
-    // If the path has been cached, we already know the rules that apply.
-    if ($cached_path) {
-      $path_rules = $cached_path['rules'];
-    }
-    else {
-      $permissive_enforcement = $this->config->get('enforcement') == 'permissive';
-      /** @var \Drupal\shibboleth_path\Entity\ShibbolethPathRule $path_rules[] */
-      $path_rules = $this->pathRuleStorage->getMatchingRules($path, $permissive_enforcement);
-
-      // Build the data for the cache item.
-      $data = ['rules' => $path_rules];
-      $this->setPathCache($path, $data);
-    }
+    $applies = $this->applies($path);
 
     // There are no Shibboleth path rules that match the path so no further
     // checks are needed.
-    if (empty($path_rules)) {
-      return TRUE;
+    if (!$applies) {
+      return AccessResult::allowed();
     }
 
     // Prevent protected pages from caching.
@@ -146,25 +143,23 @@ class ShibbolethPathAccessCheck implements AccessInterface {
     }
 
     // At this point, the path is protected and there's a Shibboleth session.
-    // We'll assume access until we check the other criteria.
-    $criteria_met = TRUE;
-    foreach ($path_rules as $path_rule) {
+    foreach ($this->pathRules as $path_rule) {
       $criteria_type = $path_rule->get('criteria_type');
       $criteria = $path_rule->getCriteria();
       if ($criteria_type == 'affiliation') {
         $shib_affiliation = $this->shibbolethAuthManager->getAffiliation();
         if (empty($shib_affiliation) || empty(array_intersect($shib_affiliation, $criteria))) {
-          $criteria_met = FALSE;
+          return AccessResult::forbidden('Blocked by Shibboleth path rule');
         }
       }
       elseif ($criteria_type == 'groups') {
         $shib_groups = $this->shibbolethAuthManager->getGroups();
         if (empty($shib_groups) || empty(array_intersect($shib_groups, $criteria))) {
-          $criteria_met = FALSE;
+          return AccessResult::forbidden('Blocked by Shibboleth path rule');
         }
       }
     }
-    return $criteria_met;
+    return AccessResult::allowed();
   }
 
   /**
