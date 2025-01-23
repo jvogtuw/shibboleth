@@ -1,3 +1,34 @@
 shibboleth.settings:
   type: config_object
   label: 'Shibboleth settings'
+  mapping:
+    shibboleth_login_handler_url:
+      type: string
+      label: 'Shibboleth login handler URL'
+    shibboleth_logout_handler_url:
+      type: string
+      label: 'Shibboleth logout handler URL'
+    server_variable_authname:
+      type: string
+      label: 'Username session variable'
+    server_variable_email:
+      type: string
+      label: 'Email session variable'
+    server_variable_affiliation:
+      type: string
+      label: 'Affiliation session variable'
+    server_variable_groups:
+      type: string
+      label: 'Groups membership session variable'
+    login_link_text:
+      type: string
+      label: 'Login link text'
+    logout_link_text:
+      type: string
+      label: 'Logout link text'
+    shibboleth_id_label:
+      type: string
+      label: 'Label/term for Shibboleth ID'
+    auto_register_user:
+      type: boolean
+      label: 'Automatically register user when login link is clicked'
