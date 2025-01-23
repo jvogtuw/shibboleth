@@ -6,25 +6,10 @@
  */
 
 /**
- * Implements hook_install().
- */
-function shibboleth_path_install() {
-  \Drupal::messenger()->addStatus(__FUNCTION__);
-}
-
-/**
- * Implements hook_uninstall().
- */
-function shibboleth_path_uninstall() {
-  \Drupal::messenger()->addStatus(__FUNCTION__);
-}
-
-/**
  * Set a default value for rule enforcement.
  */
 function shibboleth_path_update_9001() {
 
-  // Set the default dumper plugin to kint if kint module is available.
   \Drupal::configFactory()->getEditable('shibboleth_path.settings')
     ->set('enforcement', 'strict')
     ->save(TRUE);
