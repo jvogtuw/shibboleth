@@ -3,6 +3,7 @@
 namespace Drupal\shibboleth_path\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\Annotation\ConfigEntityType;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\shibboleth_path\ShibbolethPathRuleInterface;
 
@@ -155,7 +156,7 @@ class ShibbolethPathRule extends ConfigEntityBase implements ShibbolethPathRuleI
   private function setCriteriaList() {
     $criteria_list = [];
     if (!empty($this->criteria)) {
-      $criteria_list = explode("\n\r", $this->criteria);
+      $criteria_list = explode("\r\n", $this->criteria);
     }
     $this->criteria_list = $criteria_list;
   }
