@@ -61,17 +61,13 @@ class ShibbolethPathSettings extends ConfigFormBase {
 
     $config = $this->config('shibboleth_path.settings');
 
+    $paths_to_exclude = $this->pathsToExcludeOptions();
     $form['excluded_routes'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Exclude the following routes from Shibboleth protection'),
       '#description' => $this->t('These settings will override any path access rules that apply to them. They will not override Drupal permissions.<br>* Excluding these routes is recommended if enabling the "Whole site" path rule.'),
-      '#options' => [
-        'shibboleth-drupal_logout' => t('Shibboleth logout from Drupal [/shibboleth/logout] (recommended*)'),
-        'user-login' => t('Core user login [/user/login] (recommended*)'),
-        'user-password' => t('Core user password reset [/user/password]'),
-        'user-register' => t('Core user registration [/user/register]'),
-      ],
-      '#default_value' => $config->get('excluded_routes') ? $config->get('excluded_routes') : ['user-login'],
+      '#options' => $paths_to_exclude,
+      '#default_value' => $config->get('excluded_routes') ?? ['user-login'],
     ];
     $form['enforcement'] = [
       '#type' => 'radios',
@@ -103,4 +99,12 @@ class ShibbolethPathSettings extends ConfigFormBase {
     parent::submitForm($form, $form_state);
   }
 
+  protected function pathsToExcludeOptions() {
+    return [
+      'shibboleth-drupal_logout' => t('Shibboleth logout from Drupal [/shibboleth/logout] (recommended*)'),
+      'user-login' => t('Core user login [/user/login] (recommended*)'),
+      'user-password' => t('Core user password reset [/user/password]'),
+      'user-register' => t('Core user registration [/user/register]'),
+    ];
+  }
 }

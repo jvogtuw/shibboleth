@@ -1,27 +1,41 @@
+shibboleth_path.settings:
+  type: config_object
+  label: 'Shibboleth path settings'
+  mapping:
+    excluded_routes:
+      type: sequence
+      label: 'Exclude routes from Shibboleth protection'
+      sequence:
+        type: string
+    enforcement:
+      type: string
+      label: 'Rule enforcement type'
+
 shibboleth_path.shibboleth_path_rule.*:
   type: config_entity
-  label: Protected path rule
+  label: 'Protected path rule'
   mapping:
     id:
       type: string
-      label: ID
+      label: 'ID'
     label:
       type: label
-      label: Label
+      label: 'Label'
     uuid:
       type: string
+      label: 'UUID'
     pattern:
       type: label
-      label: Path pattern
+      label: 'Path pattern'
     criteria_type:
       type: string
-      label: Criteria type
+      label: 'Criteria type'
     criteria:
       type: string
-      label: Criteria
+      label: 'Criteria'
     status:
       type: bool
-      label: Status
+      label: 'Status'
     locked:
       type: bool
-      label: Locked
+      label: 'Locked'
