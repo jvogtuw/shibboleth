@@ -8,7 +8,7 @@ services:
 
   access_check.shibboleth_path.path_access:
     class: Drupal\shibboleth_path\Access\ShibbolethPathAccessCheck
-    arguments: [ '@shibboleth.auth_manager', '@cache.shibboleth', '@entity_type.manager','@page_cache_kill_switch', '@config.factory', '@logger.channel.shibboleth' ]
+    arguments: [ '@shibboleth.auth_manager', '@cache.shibboleth', '@entity_type.manager','@page_cache_kill_switch', '@config.factory' ]
 
   logger.channel.shibboleth_path:
     parent: logger.channel_base
