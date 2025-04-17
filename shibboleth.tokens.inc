@@ -24,7 +24,7 @@ function shibboleth_token_info() {
   ];
   $tokens['shibboleth-session']['user-email'] = [
     'name' => t('Shibboleth user email'),
-    'description' => t('The current Shibboleth session email address'),
+    'description' => t('The current Shibboleth session email address.'),
   ];
   $tokens['shibboleth-session']['user-affiliations'] = [
     'name' => t('Shibboleth user affiliations'),
@@ -39,8 +39,12 @@ function shibboleth_token_info() {
   ];
 
   $tokens['shibboleth']['login-url'] = [
-    'name' => t('Login URL'),
-    'description' => t('Shibboleth login URL with redirect.'),
+    'name' => t('Site login URL'),
+    'description' => t('Shibboleth site login URL with redirect. Attempts to log Shibboleth user in as a Drupal user.'),
+  ];
+  $tokens['shibboleth']['authentication-url'] = [
+    'name' => t('Shibboleth authentication URL'),
+    'description' => t('Shibboleth session login URL with redirect. Does not log user into Drupal site.'),
   ];
 
   return [
@@ -66,6 +70,9 @@ function shibboleth_tokens($type, $tokens, array $data, array $options, Bubbleab
             switch ($name) {
               case 'login-url':
                 $replacements[$original] = $shib_auth_mgr->getLoginUrl()->toString();
+                break;
+              case 'authentication-url':
+                $replacements[$original] = $shib_auth_mgr->getAuthenticateUrl()->toString();
                 break;
             }
           }
