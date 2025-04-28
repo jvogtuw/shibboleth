@@ -35,18 +35,6 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
   protected $shibbolethCache;
 
   /**
-   * The page cache.
-   *
-   * @var \Drupal\Core\Cache\CacheBackendInterface
-   */
-  private $pageCache;
-
-  /**
-   * @var \Drupal\Core\Cache\CacheBackendInterface
-   */
-  private $renderCache;
-
-  /**
    * The list of routes excluded from Shibboleth path rule protection.
    *
    * @var \Symfony\Component\Routing\Route[]
@@ -92,23 +80,18 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
    * @param \Drupal\Core\Cache\CacheBackendInterface $shibboleth_cache
    *   The Shibboleth path cache.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
-   *   The messenger.
-   * @param \Drupal\Core\Cache\CacheBackendInterface $page_cache
    *   The page cache.
    * @param \Drupal\Core\Routing\RouteProviderInterface $route_provider
    *   The route provider.
    */
   public function __construct(EntityTypeInterface $entity_type, ConfigFactoryInterface $config_factory, UuidInterface
   $uuid_service, LanguageManagerInterface $language_manager, MemoryCacheInterface $memory_cache, PathMatcherInterface
-  $path_matcher, CacheBackendInterface $shibboleth_cache, MessengerInterface $messenger, CacheBackendInterface
-  $page_cache, CacheBackendInterface $render_cache, RouteProviderInterface $route_provider) {
+  $path_matcher, CacheBackendInterface $shibboleth_cache, MessengerInterface $messenger, RouteProviderInterface $route_provider) {
     parent::__construct($entity_type, $config_factory, $uuid_service, $language_manager, $memory_cache);
 
     $this->pathMatcher = $path_matcher;
     $this->shibbolethCache = $shibboleth_cache;
     $this->messenger = $messenger;
-    $this->pageCache = $page_cache;
-    $this->renderCache = $render_cache;
     $this->routeProvider = $route_provider;
   }
 
@@ -125,8 +108,6 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
       $container->get('path.matcher'),
       $container->get('cache.shibboleth'),
       $container->get('messenger'),
-      $container->get('cache.page'),
-      $container->get('cache.render'),
       $container->get('router.route_provider')
     );
   }
@@ -134,7 +115,7 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
   /**
    * {@inheritdoc}
    */
-  public function getMatchingRules(string $path, $best_matches = TRUE, $include_disabled = FALSE) {
+  public function getMatchingRules(string $path, bool $best_matches = TRUE, bool $include_disabled = FALSE) {
 
     // Don't continue if the path is excluded from path protection.
     if ($this->isExcluded($path)) {
@@ -244,12 +225,7 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
    */
   public function save(EntityInterface $entity) {
     $return = parent::save($entity);
-    $this->shibbolethCache->deleteAll();
-    $this->messenger->addStatus($this->t('Shibboleth paths cache cleared.'));
-    $this->pageCache->deleteAll();
-    $this->messenger->addStatus($this->t('Page cache cleared.'));
-    $this->renderCache->deleteAll();
-    $this->messenger->addStatus($this->t('Render cache cleared.'));
+    drupal_flush_all_caches();
     return $return;
   }
 

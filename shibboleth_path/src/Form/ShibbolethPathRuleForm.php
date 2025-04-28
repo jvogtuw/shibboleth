@@ -90,6 +90,10 @@ class ShibbolethPathRuleForm extends EntityForm {
       '#default_value' => $this->entity->status(),
     ];
 
+    $form['save_info'] = [
+      '#markup' => t('<strong>Note:</strong> Saving will flush all site caches.'),
+    ];
+
     return $form;
   }
 
