@@ -5,6 +5,7 @@ namespace Drupal\shibboleth\Plugin\Block;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\shibboleth\Authentication\ShibbolethAuthManager;
@@ -77,16 +78,93 @@ class ShibbolethLoginBlock extends BlockBase implements ContainerFactoryPluginIn
   /**
    * {@inheritdoc}
    */
+  public function blockForm($form, FormStateInterface $form_state) {
+
+    $config = $this->configuration;
+    $form = parent::blockForm($form, $form_state);
+
+    $form['styles'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Link styles'),
+      '#open' => FALSE,
+    ];
+    $form['styles']['login_link_classes'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('CSS classes to add to the login link.'),
+      '#default_value' => $config['login_link_classes'] ?? '',
+      '#description' => $this->t('Classes are added to the login link\'s &lt;a&gt; tag. Separate multiple classes with a space.'),
+    ];
+    $form['styles']['logout_link_classes'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('CSS classes to add to the logout link.'),
+      '#default_value' => $config['logout_link_classes'] ?? '',
+      '#description' => $this->t('Classes are added to the logout link\'s &lt;a&gt; tag. Separate multiple classes with a space.'),
+    ];
+    return $form;
+  }
+
+  public function blockValidate($form, FormStateInterface $form_state) {
+
+    $values = $form_state->getValues();
+    if (!empty($values['styles']['login_link_classes'])) {
+      $validated_classes = $this->validateClasses($values['styles']['login_link_classes']);
+      if (!$validated_classes) {
+        $form_state->setErrorByName('styles][login_link_classes', $this->t('Login link classes must be valid CSS classes.'));
+      }
+      else {
+        $form_state->setValue(['styles', 'login_link_classes'], $validated_classes);
+      }
+    }
+    if (!empty($values['styles']['logout_link_classes'])) {
+      $validated_classes = $this->validateClasses($values['styles']['logout_link_classes']);
+      if (!$validated_classes) {
+        $form_state->setErrorByName('styles][logout_link_classes', $this->t('Logout link classes must be valid CSS classes.'));
+      }
+      else {
+        $form_state->setValue(['styles', 'logout_link_classes'], $validated_classes);
+      }
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function blockSubmit($form, FormStateInterface $form_state) {
+    $this->configuration['login_link_classes'] = $form_state->getValue(['styles', 'login_link_classes']);
+    $this->configuration['logout_link_classes'] = $form_state->getValue([
+      'styles', 'logout_link_classes']);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function build() {
 
-    $markup = '<div class="shibboleth-block">';
-    if ($this->currentUser->isAnonymous()) {
-      $markup .= '<div class="shibboleth-link">' . $this->shibbolethAuthManager->getLoginLink() . '</div>';
-    }
-    else {
-      $markup .= '<div class="shibboleth-link">' . $this->shibbolethAuthManager->getLogoutLink() . '</div>';
-    }
-    $markup .= '</div>';
+    $link = $this->currentUser->isAnonymous() ?
+      $this->shibbolethAuthManager->getLoginUrl()->toString() :
+      $this->shibbolethAuthManager->getLogoutUrl()->toString();
+    $link_text = $this->currentUser->isAnonymous() ?
+      $this->shibbolethConfig->get('login_link_text') :
+      $this->shibbolethConfig->get('logout_link_text');
+    $link_classes = $this->currentUser->isAnonymous() ?
+      $this->configuration['login_link_classes'] :
+      $this->configuration['logout_link_classes'];
+    // if ($this->currentUser->isAnonymous()) {
+    //   $link = $this->shibbolethAuthManager->getLoginUrl()->toString();
+    //   $link_text = $this->shibbolethConfig->get('login_link_text');
+    //   $link_classes = $this->configuration['login_link_classes'];
+    // }
+    // else {
+    //   $link = $this->shibbolethAuthManager->getLogoutUrl()->toString();
+    //   $link_text = $this->shibbolethConfig->get('logout_link_text');
+    //   $link_classes = $this->configuration['logout_link_classes'];
+    // }
+
+    $markup = $this->t('<div class="shibboleth-block"><div class="shibboleth-link"><a href="@link" class="@classes">@link_text</a></div></div>', [
+      '@link' => $link,
+      '@link_text' => $link_text,
+      '@classes' => $link_classes,
+    ]);
 
     $build['shibboleth_login_block'] = [
       '#markup' => $markup,
@@ -115,4 +193,33 @@ class ShibbolethLoginBlock extends BlockBase implements ContainerFactoryPluginIn
     return Cache::mergeTags(parent::getCacheTags(), ['shibboleth_login_block']);
   }
 
+  /**
+   * Checks if a string contains all valid CSS classes.
+   *
+   * @param string $classes
+   *   A string of CSS classes.
+   *
+   * @return false|string
+   *   The original string, trimmed and with extra whitespace removed. FALSE if
+   *   any classes are not properly formatted.
+   */
+  private function validateClasses(string $classes) {
+    $class_array = explode(' ', trim($classes));
+    $valid_classes = [];
+    // Allows alphanumeric characters, hyphens and underscores. Cannot start
+    // with a digit or a hyphen followed by a digit.
+    $css_class_pattern = '/^(?:-?(?!\d)[a-zA-Z_]|[a-zA-Z_])[a-zA-Z0-9_-]*$/';
+    foreach ($class_array as $class) {
+      // Skip empty classes to remove accidental extra whitespace in the string.
+      if (empty($class)) {
+        continue;
+      }
+      // Return FALSE if any non-empty class doesn't match the format.
+      if (!preg_match($css_class_pattern, $class)) {
+        return FALSE;
+      }
+      $valid_classes[] = $class;
+    }
+    return implode(' ', $valid_classes);
+  }
 }

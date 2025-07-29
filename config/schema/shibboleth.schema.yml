@@ -32,3 +32,14 @@ shibboleth.settings:
     auto_register_user:
       type: boolean
       label: 'Automatically register user when login link is clicked'
+
+block.settings.shibboleth_login_block:*:
+  type: block_settings
+  label: 'Shibboleth login/logout block'
+  mapping:
+    login_link_classes:
+      type: string
+      label: 'CSS classes to add to the login link'
+    logout_link_classes:
+      type: string
+      label: 'CSS classes to add to the logout link'
