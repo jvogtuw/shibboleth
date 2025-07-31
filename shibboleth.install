@@ -1,0 +1,25 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the Shibboleth module.
+ */
+
+/**
+ * Add default config for login_link_classes and logout_link_classes.
+ */
+function shibboleth_update_10001() {
+  $config_factory = \Drupal::configFactory();
+  foreach ($config_factory->listAll('block.block.') as $block_config_name) {
+    $block = $config_factory->getEditable($block_config_name);
+    $settings = $block->get('settings');
+    // Only update shibboleth_login_block config.
+    if (str_starts_with($settings['id'], 'shibboleth_login_block')) {
+      // Set default config for existing Shibboleth login block config.
+      $settings['login_link_classes'] = $settings['login_link_classes'] ?? '';
+      $settings['logout_link_classes'] = $settings['logout_link_classes'] ?? '';
+      $block->set('settings', $settings)
+        ->save(TRUE);
+    }
+  }
+}

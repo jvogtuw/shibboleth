@@ -3,6 +3,6 @@ type: module
 description: Shibboleth authentication
 package: Authentication
 core_version_requirement: ^9 || ^10
-
+version: 1.0.1
 
 configure: shibboleth.settings
