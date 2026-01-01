@@ -27,4 +27,11 @@ interface ShibbolethPathRuleInterface extends ConfigEntityInterface {
    */
   public function getCriteria(bool $asArray = TRUE);
 
+  /**
+   * Gets the criteria type for the ShibbolethPathRule entity.
+   *
+   * @return ?string
+   *  Returns either 'group', 'affiliation' or NULL.
+   */
+  public function getCriteriaType(): ?string;
 }

@@ -1,19 +1,20 @@
 services:
 
-  shibboleth.path_access_subscriber:
-    class: Drupal\shibboleth_path\EventSubscriber\ShibbolethPathAccessSubscriber
-    arguments: [ '@shibboleth.auth_manager', '@access_check.shibboleth_path.path_access', '@current_user', '@session_manager' ]
+  shibboleth_path.middleware:
+    class: Drupal\shibboleth_path\StackMiddleware\ShibbolethPathMiddleware
+    arguments: [ '@shibboleth.auth_manager', '@logger.factory', '@entity_type.manager', '@config.factory' ]
     tags:
-      - { name: event_subscriber }
+      # Ensure that this comes before page caching (200), but after the ban
+      # middleware (250).
+      # - { name: http_middleware, priority: 200 }
+      - { name: http_middleware, priority: 220 }
 
-  access_check.shibboleth_path.path_access:
-    class: Drupal\shibboleth_path\Access\ShibbolethPathAccessCheck
-    arguments: [ '@shibboleth.auth_manager', '@cache.shibboleth', '@entity_type.manager','@page_cache_kill_switch', '@config.factory' ]
-
+  # todo: Remove this?
   logger.channel.shibboleth_path:
     parent: logger.channel_base
-    arguments: ['shibboleth_path']
+    arguments: [ 'shibboleth_path' ]
 
+  # todo: Remove this?
   cache.shibboleth:
     class: Drupal\Core\Cache\CacheBackendInterface
     tags:

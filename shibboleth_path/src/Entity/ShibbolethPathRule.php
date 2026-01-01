@@ -161,4 +161,13 @@ class ShibbolethPathRule extends ConfigEntityBase implements ShibbolethPathRuleI
     $this->criteria_list = $criteria_list;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function getCriteriaType(): ?string {
+    if (in_array($this->criteria_type, ['group', 'affiliation'])) {
+      return $this->criteria_type;
+    }
+    return NULL;
+  }
 }

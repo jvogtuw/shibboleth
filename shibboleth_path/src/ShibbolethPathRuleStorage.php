@@ -3,7 +3,7 @@
 namespace Drupal\shibboleth_path;
 
 use Drupal\Component\Uuid\UuidInterface;
-use Drupal\Core\Cache\CacheBackendInterface;
+// use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Cache\MemoryCache\MemoryCacheInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\Entity\ConfigEntityStorage;
@@ -12,7 +12,6 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Path\PathMatcherInterface;
 use Drupal\Core\Routing\RouteProviderInterface;
-use Drupal\Core\Messenger\MessengerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -20,19 +19,19 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class ShibbolethPathRuleStorage extends ConfigEntityStorage implements ShibbolethPathRuleStorageInterface {
 
-  /**
-   * The path matcher.
-   *
-   * @var \Drupal\Core\Path\PathMatcherInterface
-   */
-  private PathMatcherInterface $pathMatcher;
+  // /**
+  //  * The path matcher.
+  //  *
+  //  * @var \Drupal\Core\Path\PathMatcherInterface
+  //  */
+  // private PathMatcherInterface $pathMatcher;
 
-  /**
-   * The Shibboleth path rules cache bin.
-   *
-   * @var \Drupal\Core\Cache\CacheBackendInterface
-   */
-  protected $shibbolethCache;
+  // /**
+  //  * The Shibboleth path rules cache bin.
+  //  *
+  //  * @var \Drupal\Core\Cache\CacheBackendInterface
+  //  */
+  // protected $shibbolethCache;
 
   /**
    * The list of routes excluded from Shibboleth path rule protection.
@@ -49,21 +48,14 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
   private $excludedPaths;
 
   /**
-   * The route provider.
+   * The Shibboleth path module's config.
    *
-   * @var \Drupal\Core\Routing\RouteProviderInterface
+   * @var \Drupal\Core\Config\ImmutableConfig
    */
-  private $routeProvider;
+  private $config;
 
   /**
-   * The messenger.
-   *
-   * @var \Drupal\Core\Messenger\MessengerInterface
-   */
-  private $messenger;
-
-  /**
-   * Constructs a ConfigEntityStorage object.
+   * Constructs a ConfigEntityStorage object for ShibbolethPathRule entities.
    *
    * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
    *   The entity type definition.
@@ -75,24 +67,26 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
    *   The language manager.
    * @param \Drupal\Core\Cache\MemoryCache\MemoryCacheInterface $memory_cache
    *   The memory cache backend.
-   * @param \Drupal\Core\Path\PathMatcherInterface $path_matcher
+   * @param \Drupal\Core\Path\PathMatcherInterface $pathMatcher
    *   The path matcher.
    * @param \Drupal\Core\Cache\CacheBackendInterface $shibboleth_cache
    *   The Shibboleth path cache.
-   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
-   *   The page cache.
-   * @param \Drupal\Core\Routing\RouteProviderInterface $route_provider
+   * @param \Drupal\Core\Routing\RouteProviderInterface $routeProvider
    *   The route provider.
    */
-  public function __construct(EntityTypeInterface $entity_type, ConfigFactoryInterface $config_factory, UuidInterface
-  $uuid_service, LanguageManagerInterface $language_manager, MemoryCacheInterface $memory_cache, PathMatcherInterface
-  $path_matcher, CacheBackendInterface $shibboleth_cache, MessengerInterface $messenger, RouteProviderInterface $route_provider) {
+  public function __construct(
+    EntityTypeInterface $entity_type,
+    ConfigFactoryInterface $config_factory,
+    UuidInterface $uuid_service,
+    LanguageManagerInterface $language_manager,
+    MemoryCacheInterface $memory_cache,
+    protected PathMatcherInterface $pathMatcher,
+    // CacheBackendInterface $shibboleth_cache,
+    protected RouteProviderInterface $routeProvider
+  ) {
     parent::__construct($entity_type, $config_factory, $uuid_service, $language_manager, $memory_cache);
-
-    $this->pathMatcher = $path_matcher;
-    $this->shibbolethCache = $shibboleth_cache;
-    $this->messenger = $messenger;
-    $this->routeProvider = $route_provider;
+    // $this->shibbolethCache = $shibboleth_cache;
+    $this->config = $config_factory->get('shibboleth_path.settings');
   }
 
   /**
@@ -106,8 +100,7 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
       $container->get('language_manager'),
       $container->get('entity.memory_cache'),
       $container->get('path.matcher'),
-      $container->get('cache.shibboleth'),
-      $container->get('messenger'),
+      // $container->get('cache.shibboleth'),
       $container->get('router.route_provider')
     );
   }
@@ -163,13 +156,38 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
         }
       }
     }
+
     return $matches;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function isExcluded(string $path) {
+  public function getActiveRules(): array {
+    return $this->loadByProperties(['status' => 1]);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isRuleActive(string $rule_id): bool {
+    $active_rules = $this->getActiveRules();
+    return isset($active_rules[$rule_id]);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isPathProtected(string $path): bool {
+    $permissive_enforcement = $this->config->get('enforcement') == 'permissive';
+    $matching_rules = $this->getMatchingRules($path, $permissive_enforcement);
+    return !empty($matching_rules);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isExcluded(string $path): bool {
     $excluded_paths = $this->getExcludedPaths();
     foreach ($excluded_paths as $excluded_path) {
       if ($this->pathMatcher->matchPath($path, $excluded_path)) {
@@ -182,7 +200,7 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
   /**
    * {@inheritdoc}
    */
-  public function getExcludedPaths() {
+  public function getExcludedPaths(): array {
     if (empty($this->excludedPaths)) {
       $this->setExcludedRoutes();
     }
@@ -192,7 +210,7 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
   /**
    * {@inheritdoc}
    */
-  public function getExcludedRoutes() {
+  public function getExcludedRoutes(): array {
     if (empty($this->excludedRoutes)) {
       $this->setExcludedRoutes();
     }
@@ -202,9 +220,8 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
   /**
    * Sets the values of $this->excludedRoutes and $this->excludedPaths.
    */
-  private function setExcludedRoutes() {
-    $config = $this->configFactory->get('shibboleth_path.settings');
-    $excluded_route_names = $config->get('excluded_routes');
+  private function setExcludedRoutes(): void {
+    $excluded_route_names = $this->config->get('excluded_routes');
     $excluded_routes = [];
     $excluded_paths = [];
     foreach ($excluded_route_names as $route_name) {
@@ -223,7 +240,7 @@ class ShibbolethPathRuleStorage extends ConfigEntityStorage implements Shibbolet
   /**
    * {@inheritdoc}
    */
-  public function save(EntityInterface $entity) {
+  public function save(EntityInterface $entity): bool|int|null {
     $return = parent::save($entity);
     drupal_flush_all_caches();
     return $return;
